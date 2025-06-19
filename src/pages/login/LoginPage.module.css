@@ -1,0 +1,370 @@
+/* Stripe-inspired Login Page Styles */
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    background: var(--background);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+            radial-gradient(circle at 20% 80%, rgba(99, 91, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(0, 217, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.content {
+    display: flex;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Left side - Branding */
+.branding {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px;
+    background: linear-gradient(135deg, var(--stripe-50) 0%, var(--stripe-100) 100%);
+    position: relative;
+}
+
+.branding::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
+}
+
+.logoWrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 48px;
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    background: var(--stripe-gradient-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(99, 91, 255, 0.2);
+}
+
+.logoIcon {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.logoTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.logoSubtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+}
+
+.title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+.titleHighlight {
+    background: var(--gradient-tech);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.description {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+    line-height: 1.6;
+    max-width: 480px;
+}
+
+.features {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.featureIconWrapper {
+    width: 40px;
+    height: 40px;
+    background: rgba(99, 91, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.featureIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color);
+}
+
+.featureTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.featureDescription {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Right side - Form */
+.formWrapper {
+    flex: 0 0 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: var(--card-bg);
+}
+
+.form {
+    width: 100%;
+    max-width: 360px;
+}
+
+.formHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.lockIconWrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--stripe-100), var(--stripe-200));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px auto;
+    border: 1px solid var(--border-color);
+}
+
+.lockIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--primary-color);
+}
+
+.formTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.formSubtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.googleButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-bottom: 32px;
+}
+
+.googleButton::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(99, 91, 255, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.googleButton:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(99, 91, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.googleButton:hover::before {
+    left: 100%;
+}
+
+.googleButton:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(99, 91, 255, 0.2);
+}
+
+.googleButtonIcon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.googleButton:hover .googleButtonIcon {
+    transform: translateX(2px);
+}
+
+.terms {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.5;
+}
+
+.link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.link:hover {
+    color: var(--primary-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .content {
+        flex-direction: column;
+    }
+
+    .branding {
+        padding: 60px 40px;
+    }
+
+    .branding::before {
+        display: none;
+    }
+
+    .formWrapper {
+        flex: none;
+        padding: 40px;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0;
+    }
+
+    .branding {
+        padding: 40px 24px;
+    }
+
+    .formWrapper {
+        padding: 24px;
+    }
+
+    .form {
+        max-width: 100%;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .features {
+        gap: 24px;
+    }
+
+    .logoWrapper {
+        margin-bottom: 32px;
+    }
+
+    .description {
+        margin-bottom: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .branding {
+        padding: 32px 20px;
+    }
+
+    .formWrapper {
+        padding: 20px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .description {
+        font-size: 1rem;
+    }
+
+    .logoTitle {
+        font-size: 1.5rem;
+    }
+
+    .googleButton {
+        padding: 14px 20px;
+        font-size: 0.9rem;
+    }
+}
