@@ -11,6 +11,8 @@ import {AuthProvider} from "./hooks/AuthenticationContext.jsx";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import LoginPage from "./pages/login/LoginPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
+import StudentPortal from "./pages/student/StudentPortal.jsx";
+import ArticlesPage from "./pages/articles/ArticlesPage.jsx";
 
 
 const router = createBrowserRouter([
@@ -24,6 +26,18 @@ const router = createBrowserRouter([
             },
             {
                 path: '/login',
+                element: <LoginPage/>
+            },
+            {
+                path: '/articles',
+                element: <ArticlesPage/>
+            },
+            {
+                path: '/student',
+                element: <StudentPortal/>
+            },
+            {
+                path: '/counselor',
                 element: <LoginPage/>
             },
             {
