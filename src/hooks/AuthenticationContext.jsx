@@ -1,19 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// Type declarations
-// declare global {
-//     interface Window {
-//         google?: {
-//             accounts?: {
-//                 id?: {
-//                     disableAutoSelect: () => void;
-//                 };
-//             };
-//         };
-//     }
-// }
-
 const AuthContext = createContext(undefined);
 
 // Configuration
@@ -63,7 +50,7 @@ class AuthAPI {
     googleAuth(credential) {
         return this.request('/auth/google', {
             method: 'POST',
-            body: JSON.stringify(credential ),
+            body: JSON.stringify(credential),
         });
     }
 
@@ -165,7 +152,6 @@ export const AuthProvider = ({ children }) => {
             setIsLoading(false);
         }
     };
-
 
     const signup = async (email, password, name) => {
         try {

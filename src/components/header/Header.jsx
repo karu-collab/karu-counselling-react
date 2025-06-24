@@ -66,7 +66,7 @@
         const navItems = [
             { path: '/', label: 'Home', exact: true },
             { path: '/articles', label: 'Articles' },
-            { path: '/Dashboard', label: 'Dashboard' },
+            { path: '/dashboard', label: 'Dashboard' },
         ];
 
         return (

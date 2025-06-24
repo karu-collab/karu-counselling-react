@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 const localizer = momentLocalizer(moment);
 
-export default function StudentPortal() {
+export default function StudentDashboard() {
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [selectedCounsellor, setSelectedCounsellor] = useState('');

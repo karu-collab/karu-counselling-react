@@ -11,8 +11,11 @@ import {AuthProvider} from "./hooks/AuthenticationContext.jsx";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import LoginPage from "./pages/login/LoginPage.jsx";
 import ErrorPage from "./pages/ErrorPage.jsx";
-import StudentPortal from "./pages/student/StudentPortal.jsx";
+import StudentDashboard from "./pages/dashboards/student/StudentDashboard.jsx";
 import ArticlesPage from "./pages/articles/ArticlesPage.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import CounsellorDashboard from "./pages/dashboards/counsellor/CounsellorDashboard.jsx";
+import Dashboard from "./pages/dashboards/Dashboard.jsx";
 
 
 const router = createBrowserRouter([
@@ -33,12 +36,29 @@ const router = createBrowserRouter([
                 element: <ArticlesPage/>
             },
             {
-                path: '/student',
-                element: <StudentPortal/>
+                path: '/dashboard',
+                element: (
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                ),
+
             },
             {
-                path: '/counselor',
-                element: <LoginPage/>
+                path: '/dashboard.student',
+                element: (
+                    <ProtectedRoute>
+                        <StudentDashboard />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: '/dashboard.counselor',
+                element: (
+                    <ProtectedRoute>
+                        <CounsellorDashboard />
+                    </ProtectedRoute>
+                ),
             },
             {
                 path: '/error',
@@ -54,17 +74,13 @@ const router = createBrowserRouter([
 ])
 
 
-const CLIENT_ID = 'your-google-client-id';
-
 createRoot(document.getElementById('root')).render(
     <StrictMode>
       <ThemeContextProvider>
           <AuthProvider>
-              <GoogleOAuthProvider clientId={CLIENT_ID}>
                   <WebSocketProvider>
                       <RouterProvider router={router}/>
                   </WebSocketProvider>
-              </GoogleOAuthProvider>
           </AuthProvider>
       </ThemeContextProvider>,
     </StrictMode>,
