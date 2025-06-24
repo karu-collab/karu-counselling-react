@@ -4,7 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 const AuthContext = createContext(undefined);
 
 // Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://counselling-fast-backend.onrender.com';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // API client class
