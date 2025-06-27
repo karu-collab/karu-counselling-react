@@ -1,0 +1,560 @@
+/* CounsellorAccount.module.css - Stripe-inspired styles */
+
+.container {
+    min-height: 100vh;
+    background: var(--gradient-background);
+    padding: 24px;
+}
+
+.maxWidth {
+    max-width: 1024px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    letter-spacing: -0.025em;
+}
+
+.titleIcon {
+    width: 32px;
+    height: 32px;
+    color: var(--primary-color);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+    font-weight: 400;
+}
+
+.grid {
+    display: grid;
+    gap: 24px;
+}
+
+.gridLg {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .gridLg {
+        grid-template-columns: 1fr 2fr;
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(26, 31, 54, 0.1);
+    transform: translateY(-2px);
+}
+
+.cardHeader {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    letter-spacing: -0.025em;
+}
+
+.cardHeaderWithIcon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cardHeaderIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color);
+}
+
+.daysList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dayItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    transition: all 0.2s ease;
+}
+
+.dayItem:hover {
+    background-color: var(--stripe-50);
+    border-color: var(--stripe-200);
+}
+
+.dayName {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.dayControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slotCount {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.editButton {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.editButtonActive {
+    background-color: var(--stripe-100);
+    color: var(--primary-color);
+}
+
+.editButtonInactive {
+    background-color: var(--stripe-50);
+    color: var(--text-secondary);
+}
+
+.editButtonInactive:hover {
+    background-color: var(--stripe-100);
+}
+
+.toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggleInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggleSlider {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.toggleSliderOff {
+    background-color: var(--stripe-200);
+}
+
+.toggleSliderOn {
+    background-color: var(--primary-color);
+}
+
+.toggleThumb {
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 4px;
+    transition: transform 0.2s ease;
+}
+
+.toggleThumbOff {
+    transform: translateX(4px);
+}
+
+.toggleThumbOn {
+    transform: translateX(24px);
+}
+
+.timeSlotHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.statusActive {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.statusInactive {
+    background-color: var(--stripe-100);
+    color: var(--text-secondary);
+}
+
+.inactiveState {
+    text-align: center;
+    padding: 48px 0;
+}
+
+.inactiveIcon {
+    width: 64px;
+    height: 64px;
+    color: var(--stripe-200);
+    margin: 0 auto 16px;
+}
+
+.inactiveText {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.enableButton {
+    background: var(--stripe-gradient-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(99, 91, 255, 0.2);
+}
+
+.enableButton:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--accent-color));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 91, 255, 0.3);
+}
+
+.addSlotSection {
+    background-color: var(--stripe-50);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.addSlotTitle {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.addSlotGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .addSlotGrid {
+        grid-template-columns: 1fr 1fr 2fr;
+    }
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputLabel {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.timeInput {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.timeInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+}
+
+.addSlotButtonContainer {
+    display: flex;
+    align-items: end;
+}
+
+.addSlotButton {
+    width: 100%;
+    background: var(--stripe-gradient-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.addSlotButton:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--accent-color));
+    transform: translateY(-1px);
+}
+
+.addIcon {
+    width: 16px;
+    height: 16px;
+}
+
+.quickAddSection {
+    margin-bottom: 24px;
+}
+
+.quickAddTitle {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.quickAddGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+@media (min-width: 768px) {
+    .quickAddGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.quickAddButton {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    background-color: var(--stripe-100);
+    color: var(--text-primary);
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quickAddButton:hover {
+    background-color: var(--stripe-200);
+    transform: translateY(-1px);
+}
+
+.currentSlotsTitle {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.emptySlots {
+    text-align: center;
+    padding: 32px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+}
+
+.emptySlotsIcon {
+    width: 48px;
+    height: 48px;
+    color: var(--stripe-200);
+    margin: 0 auto 8px;
+}
+
+.emptySlotsText {
+    color: var(--text-secondary);
+}
+
+.slotsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slotItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: var(--stripe-50);
+    border-radius: 6px;
+    border: 1px solid var(--stripe-200);
+}
+
+.slotLabel {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.deleteButton {
+    color: var(--error-color);
+    padding: 4px;
+    border-radius: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+    background-color: rgba(250, 117, 90, 0.1);
+    color: var(--error-color);
+}
+
+.deleteIcon {
+    width: 16px;
+    height: 16px;
+}
+
+.saveSection {
+    margin-top: 48px;
+    text-align: center;
+}
+
+.saveButton {
+    background: var(--stripe-gradient-accent);
+    color: white;
+    padding: 12px 32px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0, 217, 255, 0.25);
+    transition: all 0.2s ease;
+}
+
+.saveButton:hover {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 217, 255, 0.35);
+}
+
+.saveIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.summaryCard {
+    margin-top: 48px;
+}
+
+.summaryTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.summaryGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.summaryDay {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 16px;
+}
+
+.summaryDayName {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.summarySlots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.summarySlot {
+    background-color: var(--stripe-100);
+    color: var(--primary-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.summaryEmpty {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 16px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .dayControls {
+        gap: 8px;
+    }
+
+    .addSlotGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .addSlotButtonContainer {
+        align-items: stretch;
+    }
+}

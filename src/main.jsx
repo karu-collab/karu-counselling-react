@@ -16,6 +16,7 @@ import ArticlesPage from "./pages/articles/ArticlesPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import CounsellorDashboard from "./pages/dashboards/counsellor/CounsellorDashboard.jsx";
 import Dashboard from "./pages/dashboards/Dashboard.jsx";
+import SetupAccount from "./pages/setupAccount/SetupAccount.jsx";
 
 
 const router = createBrowserRouter([
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
                 element: <ArticlesPage/>
             },
             {
+                path: '/setup-account',
+                element: <SetupAccount/>
+            },
+            {
                 path: '/dashboard',
                 element: (
                     <ProtectedRoute>
@@ -53,7 +58,7 @@ const router = createBrowserRouter([
                 ),
             },
             {
-                path: '/dashboard.counselor',
+                path: '/dashboard.counsellor',
                 element: (
                     <ProtectedRoute>
                         <CounsellorDashboard />

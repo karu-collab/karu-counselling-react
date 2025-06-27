@@ -18,9 +18,14 @@ const LoginPage = ({ redirectTo = '/dashboard' }) => {
     const handleGoogleSuccess = async (response) => {
         try {
             const loginResponse = await googleLogin(response);
+
             if (loginResponse === 'success') {
                 navigate(redirectTo);
             }
+            if (loginResponse === 'setup-account') {
+                navigate('/setup-account');
+            }
+            console.log('login response: ',loginResponse)
         } catch (error) {
             console.error('Google login failed:', error);
         }

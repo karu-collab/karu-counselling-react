@@ -7,9 +7,9 @@ const Dashboard = () => {
     console.log('user dashboard: ',user)
 
     // Redirect to appropriate dashboard based on user role
-    if (user?.role === "MEDICAL_PROFESSIONAL") {
+    if (user?.role === "COUNSELLOR") {
         return <Navigate to="/dashboard.counsellor" replace />;
-    } else if (user?.role === "USER") {
+    } else if (user?.role === "STUDENT") {
         return <Navigate to="/dashboard.student" replace />;
     }
 

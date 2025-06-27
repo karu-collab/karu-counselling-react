@@ -1,0 +1,208 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.modalContent {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.modalTitle {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+    color: var(--text-color);
+}
+
+.closeButton {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-color-muted);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-speed);
+}
+
+.closeButton:hover {
+    color: var(--color-error);
+}
+
+.modalBody {
+    padding: var(--spacing-lg);
+    flex: 1;
+}
+
+.modalFooter {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+}
+
+.counselorInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.counselorImage {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.counselorName {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.counselorSpecialty {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+}
+
+.instructions {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-color-secondary);
+    text-align: left;
+}
+
+.confirmationDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.bookingDetails {
+    background-color: var(--bg-color-secondary);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+}
+
+.detailItem {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.detailIcon {
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    margin-top: var(--spacing-xs);
+}
+
+.detailTitle {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 0.9rem;
+    color: var(--text-color-muted);
+}
+
+.detailValue {
+    margin: 0;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-color);
+}
+
+.notesSection {
+    margin-top: var(--spacing-md);
+    text-align: left;
+}
+
+.notesLabel {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+}
+
+.notesInput {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-sm);
+    resize: vertical;
+    min-height: 100px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+}
+
+.notesInput:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+.cancelButton, .backButton {
+    background-color: transparent;
+    color: var(--text-color-muted);
+    border: 1px solid var(--card-border);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-normal);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.cancelButton:hover, .backButton:hover {
+    background-color: var(--bg-color-secondary);
+}
+
+.confirmButton {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.confirmButton:hover {
+    background-color: var(--color-primary-hover);
+}
+
+@media (max-width: 768px) {
+    .modalContent {
+        width: 95%;
+        max-width: none;
+        max-height: 95vh;
+    }
+
+    .modalBody {
+        padding: var(--spacing-md);
+    }
+}

@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const AuthContext = createContext(undefined);
 
 // Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://counselling-fast-backend.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // API client class
@@ -33,32 +33,10 @@ class AuthAPI {
         return response.json();
     }
 
-    signup(email, password, name) {
-        return this.request('/auth/signup', {
-            method: 'POST',
-            body: JSON.stringify({ email, password, name }),
-        });
-    }
-
-    login(email, password) {
-        return this.request('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
-        });
-    }
-
     googleAuth(credential) {
         return this.request('/auth/google', {
             method: 'POST',
             body: JSON.stringify(credential),
-        });
-    }
-
-    getCurrentUser(token) {
-        return this.request('/auth/me', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
         });
     }
 }
@@ -71,56 +49,48 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Check for existing session on app load
     useEffect(() => {
+        const initializeAuth = () => {
+            try {
+                // Restore both user and token
+                const storedUser = localStorage.getItem('karu_user');
+                const storedToken = localStorage.getItem('karu_token');
+
+                if (storedUser && storedToken) {
+                    const userData = JSON.parse(storedUser);
+                    setUser(userData);
+                    setToken(storedToken);
+                } else {
+                    // Clear any partial data
+                    if (storedUser) localStorage.removeItem('karu_user');
+                    if (storedToken) localStorage.removeItem('karu_token');
+                }
+            } catch (error) {
+                console.error('Error parsing stored auth data:', error);
+                // Clear corrupted data
+                localStorage.removeItem('karu_user');
+                localStorage.removeItem('karu_token');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         initializeAuth();
     }, []);
 
-    const initializeAuth = async () => {
-        try {
-            const storedToken = localStorage.getItem('kia_token');
-            const storedUser = localStorage.getItem('kia_user');
-
-            if (storedToken && storedUser) {
-                try {
-                    const currentUser = await authAPI.getCurrentUser(storedToken);
-                    setToken(storedToken);
-                    setUser(currentUser);
-                } catch (error) {
-                    localStorage.removeItem('kia_token');
-                    localStorage.removeItem('kia_user');
-                    console.error('Token validation failed:', error);
-                }
-            }
-        } catch (error) {
-            console.error('Auth initialization error:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleAuthSuccess = (authResponse) => {
         const { access_token, user: userData } = authResponse;
+
+        console.log('Handling auth success:', { access_token, userData });
 
         setToken(access_token);
         setUser(userData);
         setError(null);
 
-        localStorage.setItem('kia_token', access_token);
-        localStorage.setItem('kia_user', JSON.stringify(userData));
-    };
-
-    const login = async (email, password) => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const response = await authAPI.login(email, password);
-            handleAuthSuccess(response);
-        } catch (error) {
-            setError(error.message || 'Login failed');
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
+        // Store both token and user
+        localStorage.setItem('karu_token', access_token);
+        localStorage.setItem('karu_user', JSON.stringify(userData));
     };
 
     const googleLogin = async (response) => {
@@ -140,12 +110,21 @@ export const AuthProvider = ({ children }) => {
                 prompt,
             };
 
-            console.log('payload', payload);
+            console.log('Google login payload:', payload);
 
             const apiResponse = await authAPI.googleAuth(payload);
-            console.log('apiResponse: ', apiResponse);
+            console.log('Google login API response:', apiResponse);
+
             handleAuthSuccess(apiResponse);
+
+            if (apiResponse.user.account_is_set === false) {
+                return 'setup-account';
+            }
+            if (apiResponse.user.account_is_set === true) {
+                return 'success';
+            }
         } catch (error) {
+            console.error('Google login error:', error);
             setError(error.message || 'Google login failed');
             throw error;
         } finally {
@@ -153,27 +132,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const signup = async (email, password, name) => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const response = await authAPI.signup(email, password, name);
-            handleAuthSuccess(response);
-        } catch (error) {
-            setError(error.message || 'Signup failed');
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const logout = () => {
+        console.log('Logging out user');
+
         setUser(null);
         setToken(null);
         setError(null);
-        localStorage.removeItem('kia_token');
-        localStorage.removeItem('kia_user');
 
+        // Clear localStorage
+        localStorage.removeItem('karu_token');
+        localStorage.removeItem('karu_user');
+
+        // Disable Google auto-select
         if (window.google?.accounts?.id) {
             window.google.accounts.id.disableAutoSelect();
         }
@@ -185,9 +155,7 @@ export const AuthProvider = ({ children }) => {
         user,
         isAuthenticated: !!user && !!token,
         token,
-        login,
         googleLogin,
-        signup,
         logout,
         isLoading,
         error,
@@ -196,7 +164,9 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+            <AuthContext.Provider value={value}>
+                {children}
+            </AuthContext.Provider>
         </GoogleOAuthProvider>
     );
 };

@@ -1,15 +1,27 @@
-import styles from './StudentPortal.module.css';
-import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
+import styles from './StudentDashboard.module.css';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useState } from 'react';
-
-const localizer = momentLocalizer(moment);
+import {useAuth} from "../../../hooks/AuthenticationContext.jsx";
+import {useNavigate} from "react-router-dom";
+import { Calendar, MessageCircle, Bell, User } from 'lucide-react';
+import CounsellorList from "./CounsellorList.jsx";
+import SessionList from "./SessionList.jsx";
+import BookingModal from "./BookingModal.jsx";
 
 export default function StudentDashboard() {
+
+    const navigate = useNavigate();
+    const [counsellors, setCounsellors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('sessions');
+    const [sessions, setSessions] = useState([]);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+
+    const [selectedCounsellor, setSelectedCounsellor] = useState(null);
+
+    const {user} = useAuth()
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
-    const [selectedCounsellor, setSelectedCounsellor] = useState('');
     const [studentInfo, setStudentInfo] = useState({
         name: '',
         studentId: '',
@@ -50,83 +62,154 @@ export default function StudentDashboard() {
         setBookingStatus('Booking successful!');
     };
 
+
+    const handleBookSession = (counselorId) => {
+        const counselor = counsellors.find((c) => c.userId === counselorId);
+        if (counselor) {
+            setSelectedCounsellor(counselor);
+            setIsBookingModalOpen(true);
+        } else {
+            console.error(`Counselor with ID ${counselorId} not found.`);
+        }
+    };
+
+
+    const handleCloseBookingModal = () => {
+        setIsBookingModalOpen(false);
+    };
+    const handleBookingConfirm = async (date, timeSlot, notes,slotId) => {
+        if (!selectedCounsellor) {
+            alert('No counselor selected.');
+            return;
+        }
+    }
+
+    const handleStartChat = (counselorId) => {
+
+
+    };
+
+
+    const handleRescheduleSession = (sessionId) => {
+        // In a real application, implement reschedule logic
+        alert(`Rescheduling session #${sessionId}`);
+    };
+
+    const handleCancelSession = (sessionId) => {
+        // In a real application, implement cancel logic
+        // For now, just update the status in our local state
+        setSessions(sessions.map(session =>
+            session.id === sessionId
+                ? { ...session, status: 'cancelled' }
+                : session
+        ));
+        alert(`Session #${sessionId} cancelled`);
+    };
+
+    const handleBookAgain = (sessionId) => {
+        // Find the session
+        const session = sessions.find(s => s.id === sessionId);
+        if (session) {
+            // Find the corresponding counselor
+            const counselor = counsellors.find((c) => c.id === session.counselor.id);
+            setSelectedCounsellor(counselor);
+            setIsBookingModalOpen(true);
+        }
+    };
+
+
     return (
         <div className={styles.container}>
-            <h1>Welcome to the Student Counseling Portal</h1>
+            <header className={styles.header}>
+                <div className={styles.welcomeSection}>
+                    <h2> welcome {user?.first_name || user?.last_name || user?.full_name}!</h2>
+                    <p className={styles.welcomeSubtitle}>How can we support you today?</p>
+                </div>
+            </header>
 
-            <div className={styles.calendarContainer}>
-                <BigCalendar
-                    localizer={localizer}
-                    events={calendarEvents}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: 500 }}
-                    onSelectSlot={(slotInfo) => {
-                        setSelectedDate(slotInfo.start.toISOString().split('T')[0]);
-                        setShowBookingForm(true);
-                    }}
-                    onSelectEvent={(event) => alert(`Viewing Booking: ${event.title}`)}
-                    selectable
-                    views={['month', 'week', 'day']}
-                    defaultView="month"
-                />
+            <div className={styles.tabsContainer}>
+                <ul className={styles.tabsList}>
+                    <li
+                        className={`${styles.tabItem} ${activeTab === 'book' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('book')}
+                    >
+                        <Calendar className={styles.tabIcon} />
+                        <span className={styles.tabText}>Book a Session</span>
+                    </li>
+                    <li
+                        className={`${styles.tabItem} ${activeTab === 'sessions' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('sessions')}
+                    >
+                        <Calendar className={styles.tabIcon} />
+                        <span className={styles.tabText}>My Sessions</span>
+                    </li>
+                    <li
+                        className={`${styles.tabItem} ${activeTab === 'account' ? styles.activeTab : ''}`}
+                        onClick={() => navigate('/setup-account')}
+                    >
+                        <User className={styles.tabIcon} />
+                        <span className={styles.tabText}>My Account</span>
+                    </li>
+                </ul>
             </div>
 
-            {showBookingForm && (
-                <div className={styles.formContainer}>
-                    <h2>Book a Counseling Session</h2>
-                    <label>Date: {selectedDate}</label>
-                    <label>
-                        Time:
-                        <input
-                            type="time"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                        />
-                    </label>
-                    <label>
-                        Counselor:
-                        <select
-                            value={selectedCounsellor}
-                            onChange={(e) => setSelectedCounsellor(e.target.value)}
-                        >
-                            <option value="">Select a counselor</option>
-                            {counselors.map((counselor, index) => (
-                                <option key={index} value={counselor}>
-                                    {counselor}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <label>
-                        Student Name:
-                        <input
-                            type="text"
-                            value={studentInfo.name}
-                            onChange={(e) =>
-                                setStudentInfo({ ...studentInfo, name: e.target.value })
-                            }
-                        />
-                    </label>
-                    <label>
-                        Reason for Counseling:
-                        <textarea
-                            value={studentInfo.reason}
-                            onChange={(e) =>
-                                setStudentInfo({ ...studentInfo, reason: e.target.value })
-                            }
-                        />
-                    </label>
-                    <button type="submit" onClick={handleBookingSubmit}>
-                        Book Session
-                    </button>
-                    <button type="button" onClick={() => setShowBookingForm(false)}>
-                        Cancel
-                    </button>
-                </div>
-            )}
+            <div className={styles.tabContent}>
+                {/* My Sessions Tab */}
+                {activeTab === 'book' && (
+                    <div>
 
-            {bookingStatus && <p className={styles.successMessage}>{bookingStatus}</p>}
+
+
+                        {counsellors && counsellors.length > 0 ? (
+                                <div>
+                                    <h2>Available Counselors</h2>
+                                    <CounsellorList
+                                        counsellors={counsellors}
+                                        onBookSession={handleBookSession}
+                                        onStartChat={handleStartChat}
+                                    />
+                                </div>
+                        ):(
+                            <div>
+                                <h1>Counsellors are not available yet</h1>
+                            </div>
+                        )}
+
+
+                    </div>
+                )}
+                {/* My Sessions Tab */}
+                {activeTab === 'sessions' && (
+                    <div>
+
+                        {sessions && sessions.length > 0 ? (
+                            <SessionList
+                                sessions={sessions}
+                                onReschedule={handleRescheduleSession}
+                                onCancel={handleCancelSession}
+                                onBookAgain={handleBookAgain}
+                            />
+                        ):(
+                            <div>
+                                <h1>No booked sessions yet</h1>
+                            </div>
+                        )}
+
+
+                    </div>
+                )}
+
+            </div>
+
+            {/* Booking Modal */}
+            {isBookingModalOpen && (
+                <BookingModal
+                    isOpen={isBookingModalOpen}
+                    onClose={handleCloseBookingModal}
+                    counselor={selectedCounsellor}
+                    onBookingConfirm={handleBookingConfirm}
+                />
+            )}
         </div>
     );
 

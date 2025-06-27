@@ -1,0 +1,297 @@
+.articleManager {
+    width: 100%;
+    padding: var(--spacing-md);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.controls {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.searchBox {
+    position: relative;
+    width: 300px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: var(--spacing-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-color-muted);
+}
+
+.searchBox input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-lg) + var(--spacing-xs));
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    font-size: 0.9rem;
+}
+
+.addButton {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.addButton:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.articlesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.articleCard {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--card-border);
+}
+
+.articleCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.articleCard h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-color);
+    font-size: 1.2rem;
+}
+
+.categoryTag {
+    background-color: var(--color-secondary);
+    color: white;
+    padding: 2px var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-bottom: var(--spacing-sm);
+    align-self: flex-start;
+}
+
+.contentPreview {
+    color: var(--text-color-secondary);
+    margin-bottom: var(--spacing-md);
+    flex-grow: 1;
+    overflow: hidden;
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.cardActions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: auto;
+}
+
+.editButton, .deleteButton {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    border: 1px solid;
+    flex: 1;
+    justify-content: center;
+}
+
+.editButton {
+    background-color: transparent;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.editButton:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.deleteButton {
+    background-color: transparent;
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+.deleteButton:hover {
+    background-color: var(--color-error);
+    color: white;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.pagination button {
+    background-color: var(--bg-color-secondary);
+    border: 1px solid var(--card-border);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: var(--bg-color-tertiary);
+}
+
+.pagination span {
+    color: var(--text-color-secondary);
+}
+
+.error {
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.loading, .noArticles {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: var(--text-color-secondary);
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: var(--card-bg);
+    width: 90%;
+    max-width: 800px;
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal h2 {
+    margin-top: 0;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.formGroup {
+    margin-bottom: var(--spacing-md);
+    text-align: left;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-color);
+    font-weight: var(--font-weight-bold);
+}
+
+.formGroup input, .formGroup select, .formGroup textarea {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    font-family: var(--font-family);
+    resize: vertical;
+}
+
+.formGroup textarea {
+    min-height: 200px;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.cancelButton, .submitButton {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: var(--font-weight-bold);
+    transition: all var(--transition-speed);
+}
+
+.cancelButton {
+    background-color: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-color-secondary);
+}
+
+.cancelButton:hover {
+    background-color: var(--bg-color-tertiary);
+}
+
+.submitButton {
+    background-color: var(--color-primary);
+    border: none;
+    color: white;
+}
+
+.submitButton:hover {
+    background-color: var(--color-primary-hover);
+}

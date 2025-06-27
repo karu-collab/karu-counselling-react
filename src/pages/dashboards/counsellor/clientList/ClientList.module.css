@@ -1,0 +1,365 @@
+/* ClientList.module.css */
+.clientList {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: all var(--transition-speed);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: var(--spacing-lg);
+}
+
+.header h2 {
+    font-size: 2rem;
+    color: var(--text-color);
+    margin: 0;
+    font-weight: var(--font-weight-bold);
+}
+
+.refreshButton {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--button-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    cursor: pointer;
+    font-weight: 500;
+    font-family: var(--font-family);
+    transition: all var(--transition-speed);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.refreshButton:hover:not(:disabled) {
+    border-color: var(--button-border-hover);
+    background-color: var(--bg-color-tertiary);
+    transform: translateY(-1px);
+}
+
+.refreshButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+}
+
+.error {
+    background-color: var(--color-error);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+    font-weight: 500;
+}
+
+.loading {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+    color: var(--text-color-secondary);
+    font-size: 1.1rem;
+    background-color: var(--bg-color-secondary);
+    border-radius: var(--border-radius-lg);
+    margin: var(--spacing-xl) 0;
+}
+
+.noClients {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-color-secondary);
+    font-size: 1.1rem;
+    background-color: var(--bg-color-secondary);
+    border-radius: var(--border-radius-lg);
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid var(--card-border);
+}
+
+.noClients p {
+    margin: var(--spacing-sm) 0;
+    line-height: 1.6;
+}
+
+.clientGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.clientCard {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--card-shadow);
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-speed);
+    position: relative;
+    overflow: hidden;
+}
+
+.clientCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-primary);
+}
+
+.clientAvatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border-radius: 50%;
+    margin: 0 auto var(--spacing-lg);
+    color: white;
+    box-shadow: 0 4px 12px rgba(46, 154, 10, 0.3);
+}
+
+.clientInfo {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    flex-grow: 1;
+}
+
+.clientInfo h3 {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 1.5rem;
+    color: var(--text-color);
+    font-weight: var(--font-weight-bold);
+}
+
+.clientDetail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.95rem;
+    color: var(--text-color-secondary);
+    padding: var(--spacing-xs) 0;
+}
+
+.icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.clientActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: auto;
+}
+
+.viewHistoryButton {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    text-align: center;
+    font-family: var(--font-family);
+    box-shadow: 0 2px 8px rgba(46, 154, 10, 0.3);
+}
+
+.viewHistoryButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 154, 10, 0.4);
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background-color: var(--bg-color-secondary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--card-border);
+}
+
+.paginationButton {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--button-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    cursor: pointer;
+    font-weight: 500;
+    font-family: var(--font-family);
+    transition: all var(--transition-speed);
+    min-width: 100px;
+}
+
+.paginationButton:hover:not(:disabled) {
+    border-color: var(--button-border-hover);
+    background-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.paginationButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
+
+.paginationInfo {
+    color: var(--text-color-secondary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-align: center;
+    min-width: 200px;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modalContent {
+    background-color: var(--card-bg);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid var(--card-border);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.closeButton {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--bg-color-tertiary);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-color-secondary);
+    transition: all var(--transition-speed);
+}
+
+.closeButton:hover {
+    background-color: var(--color-error);
+    color: white;
+    border-color: var(--color-error);
+    transform: rotate(90deg);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .clientList {
+        padding: var(--spacing-lg);
+    }
+
+    .clientGrid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .clientCard {
+        padding: var(--spacing-lg);
+    }
+
+    .header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+
+    .header h2 {
+        font-size: 1.6rem;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .paginationInfo {
+        order: -1;
+    }
+
+    .modalContent {
+        width: 95%;
+        padding: var(--spacing-lg);
+        margin: var(--spacing-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .clientCard {
+        padding: var(--spacing-md);
+    }
+
+    .clientAvatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .clientInfo h3 {
+        font-size: 1.3rem;
+    }
+
+    .clientDetail {
+        font-size: 0.9rem;
+    }
+}
