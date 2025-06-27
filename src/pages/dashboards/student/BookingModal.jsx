@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import BookingCalendar from './BookingCalendar.jsx';
 import styles from './BookingModal.module.css';
 import defaultImage from '../../../assets/logo.jpg';
+import {FaTimes,FaCalendarAlt} from "react-icons/fa";
 
 export default function BookingModal({
                                          isOpen,
@@ -69,9 +70,7 @@ export default function BookingModal({
                             <div className={styles.counselorInfo}>
                                 <img
                                     src={counselor?.imageUrl || defaultImage}
-                                    alt={`${counselor?.firstName || 'Unknown'} ${
-                                        counselor?.lastName || 'Counselor'
-                                    }`}
+                                    alt={`${counselor?.name || 'Unknown'} `}
                                     className={styles.counselorImage}
                                 />
                                 <div>

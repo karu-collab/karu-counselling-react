@@ -1,23 +1,31 @@
 import styles from './StudentDashboard.module.css';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import {useAuth} from "../../../hooks/AuthenticationContext.jsx";
 import {useNavigate} from "react-router-dom";
-import { Calendar, MessageCircle, Bell, User } from 'lucide-react';
+import { Calendar, MessageCircle, Bell, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import CounsellorList from "./CounsellorList.jsx";
 import SessionList from "./SessionList.jsx";
 import BookingModal from "./BookingModal.jsx";
+import axiosInstance from "../../../utils/axiosInstance.jsx";
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function StudentDashboard() {
-
     const navigate = useNavigate();
     const [counsellors, setCounsellors] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('sessions');
+    const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('book');
     const [sessions, setSessions] = useState([]);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-
     const [selectedCounsellor, setSelectedCounsellor] = useState(null);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCounsellors, setTotalCounsellors] = useState(0);
+    const [pageLimit] = useState(10); // Items per page
 
     const {user} = useAuth()
     const [selectedDate, setSelectedDate] = useState('');
@@ -33,7 +41,46 @@ export default function StudentDashboard() {
     const [showBookingForm, setShowBookingForm] = useState(false);
     const [bookingStatus, setBookingStatus] = useState(null);
 
-    const counselors = ['Dr. Smith', 'Ms. Johnson', 'Mr. Lee']; // Example counselors
+    useEffect(() => {
+        fetchCounsellors(currentPage);
+    }, [currentPage]);
+
+    useEffect(() => {
+        console.log('counsellors: ',counsellors)
+    },[counsellors])
+
+    const fetchCounsellors = async (page = 1) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await axiosInstance.get(`${BASE_URL}/users/counsellors`, {
+                params: {
+                    page: page,
+                    limit: pageLimit
+                }
+            });
+
+            if (response.data) {
+                setCounsellors(response.data.counsellors || []);
+                setTotalPages(response.data.total_pages || 1);
+                setTotalCounsellors(response.data.total || 0);
+                setCurrentPage(response.data.page || 1);
+            }
+        } catch (error) {
+            console.error('Error fetching counsellors:', error);
+            setError('Failed to load counsellors. Please try again.');
+            setCounsellors([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
 
     const calendarEvents = bookings.map(booking => ({
         id: booking.id,
@@ -62,9 +109,8 @@ export default function StudentDashboard() {
         setBookingStatus('Booking successful!');
     };
 
-
     const handleBookSession = (counselorId) => {
-        const counselor = counsellors.find((c) => c.userId === counselorId);
+        const counselor = counsellors.find((c) => c._id === counselorId);
         if (counselor) {
             setSelectedCounsellor(counselor);
             setIsBookingModalOpen(true);
@@ -73,31 +119,23 @@ export default function StudentDashboard() {
         }
     };
 
-
     const handleCloseBookingModal = () => {
         setIsBookingModalOpen(false);
     };
-    const handleBookingConfirm = async (date, timeSlot, notes,slotId) => {
+
+    const handleBookingConfirm = async (date, timeSlot, notes, slotId) => {
         if (!selectedCounsellor) {
             alert('No counselor selected.');
             return;
         }
-    }
-
-    const handleStartChat = (counselorId) => {
-
-
+        // Implement booking confirmation logic here
     };
 
-
     const handleRescheduleSession = (sessionId) => {
-        // In a real application, implement reschedule logic
         alert(`Rescheduling session #${sessionId}`);
     };
 
     const handleCancelSession = (sessionId) => {
-        // In a real application, implement cancel logic
-        // For now, just update the status in our local state
         setSessions(sessions.map(session =>
             session.id === sessionId
                 ? { ...session, status: 'cancelled' }
@@ -107,22 +145,64 @@ export default function StudentDashboard() {
     };
 
     const handleBookAgain = (sessionId) => {
-        // Find the session
         const session = sessions.find(s => s.id === sessionId);
         if (session) {
-            // Find the corresponding counselor
             const counselor = counsellors.find((c) => c.id === session.counselor.id);
             setSelectedCounsellor(counselor);
             setIsBookingModalOpen(true);
         }
     };
 
+    // Pagination component
+    const PaginationControls = () => (
+        <div className={styles.paginationContainer}>
+            <div className={styles.paginationInfo}>
+                Showing {((currentPage - 1) * pageLimit) + 1} to {Math.min(currentPage * pageLimit, totalCounsellors)} of {totalCounsellors} counsellors
+            </div>
+            <div className={styles.paginationControls}>
+                <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={styles.paginationButton}
+                >
+                    <ChevronLeft size={16} />
+                    Previous
+                </button>
+
+                <div className={styles.pageNumbers}>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = Math.max(1, currentPage - 2) + i;
+                        if (pageNum > totalPages) return null;
+
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => handlePageChange(pageNum)}
+                                className={`${styles.pageNumber} ${pageNum === currentPage ? styles.activePage : ''}`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={styles.paginationButton}
+                >
+                    Next
+                    <ChevronRight size={16} />
+                </button>
+            </div>
+        </div>
+    );
 
     return (
         <div className={styles.container}>
             <header className={styles.header}>
                 <div className={styles.welcomeSection}>
-                    <h2> welcome {user?.first_name || user?.last_name || user?.full_name}!</h2>
+                    <h2>Welcome {user?.given_name || user?.name || 'Student'}!</h2>
                     <p className={styles.welcomeSubtitle}>How can we support you today?</p>
                 </div>
             </header>
@@ -154,34 +234,50 @@ export default function StudentDashboard() {
             </div>
 
             <div className={styles.tabContent}>
-                {/* My Sessions Tab */}
+                {/* Book a Session Tab */}
                 {activeTab === 'book' && (
                     <div>
-
-
-
-                        {counsellors && counsellors.length > 0 ? (
-                                <div>
-                                    <h2>Available Counselors</h2>
-                                    <CounsellorList
-                                        counsellors={counsellors}
-                                        onBookSession={handleBookSession}
-                                        onStartChat={handleStartChat}
-                                    />
-                                </div>
-                        ):(
+                        {loading ? (
+                            <div className={styles.loadingContainer}>
+                                <div className={styles.spinner}></div>
+                                <p>Loading counsellors...</p>
+                            </div>
+                        ) : error ? (
+                            <div className={styles.errorContainer}>
+                                <p className={styles.error}>{error}</p>
+                                <button
+                                    onClick={() => fetchCounsellors(currentPage)}
+                                    className={styles.retryButton}
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        ) : counsellors && counsellors.length > 0 ? (
                             <div>
-                                <h1>Counsellors are not available yet</h1>
+                                <div className={styles.sectionHeader}>
+                                    <h2>Available Counselors</h2>
+                                    <p>{totalCounsellors} counsellors available</p>
+                                </div>
+
+                                <CounsellorList
+                                    counsellors={counsellors}
+                                    onBookSession={handleBookSession}
+                                />
+
+                                {totalPages > 1 && <PaginationControls />}
+                            </div>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                <h3>No Counsellors Available</h3>
+                                <p>There are no counsellors available at the moment. Please check back later.</p>
                             </div>
                         )}
-
-
                     </div>
                 )}
+
                 {/* My Sessions Tab */}
                 {activeTab === 'sessions' && (
                     <div>
-
                         {sessions && sessions.length > 0 ? (
                             <SessionList
                                 sessions={sessions}
@@ -189,16 +285,20 @@ export default function StudentDashboard() {
                                 onCancel={handleCancelSession}
                                 onBookAgain={handleBookAgain}
                             />
-                        ):(
-                            <div>
-                                <h1>No booked sessions yet</h1>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                <h3>No Booked Sessions</h3>
+                                <p>You haven't booked any sessions yet. Book your first session with a counsellor!</p>
+                                <button
+                                    onClick={() => setActiveTab('book')}
+                                    className={styles.primaryButton}
+                                >
+                                    Book a Session
+                                </button>
                             </div>
                         )}
-
-
                     </div>
                 )}
-
             </div>
 
             {/* Booking Modal */}
@@ -212,5 +312,4 @@ export default function StudentDashboard() {
             )}
         </div>
     );
-
 }

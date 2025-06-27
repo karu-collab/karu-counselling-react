@@ -11,10 +11,11 @@ const CounsellorList = ({counsellors,onBookSession}) => {
             <div className={styles.counselorsGrid}>
                 {counsellors.map((counsellor) => (
                     <CounselorCard
-                        key={counsellor.userId}
-                        id={counsellor.userId}
-                        name={counsellor.lastName}
-                        specialty={"Student Matters"}
+                        key={counsellor._id}
+                        id={counsellor._id}
+                        name={counsellor.name}
+                        email={counsellor.email}
+                        picture={counsellor.picture}
                         onBookSession={onBookSession}
                     />
                 ))}
