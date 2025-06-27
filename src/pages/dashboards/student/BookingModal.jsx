@@ -16,6 +16,7 @@ export default function BookingModal({
     const [step, setStep] = useState(1); // 1: Select date/time, 2: Confirm details
     const [notes, setNotes] = useState('');
 
+
     useEffect(() => {
         if (isOpen) {
             setSelectedDate(null);
@@ -69,20 +70,14 @@ export default function BookingModal({
                         <>
                             <div className={styles.counselorInfo}>
                                 <img
-                                    src={counselor?.imageUrl || defaultImage}
+                                    src={counselor?.picture || defaultImage}
                                     alt={`${counselor?.name || 'Unknown'} `}
                                     className={styles.counselorImage}
                                 />
                                 <div>
                                     <h3 className={styles.counselorName}>
-                                        {`${counselor?.firstName || 'Unknown'} ${
-                                            counselor?.lastName || 'Counselor'
-                                        }`}
+                                        {`${counselor?.name || 'Unknown'} `}
                                     </h3>
-                                    <p className={styles.counselorSpecialty}>
-                                        {counselor?.bio ||
-                                            "I'm from Karatina Counseling Department"}
-                                    </p>
                                 </div>
                             </div>
 
@@ -92,6 +87,7 @@ export default function BookingModal({
 
                             <BookingCalendar
                                 counsellorId={counselor?.userId}
+                                workCalendar={counselor?.work_calender}
                                 onBookSlot={handleDateTimeSelected}
                                 onClose={onClose}
                             />
@@ -101,17 +97,14 @@ export default function BookingModal({
                             <div className={styles.confirmationDetails}>
                                 <div className={styles.counselorInfo}>
                                     <img
-                                        src={counselor?.imageUrl || defaultImage}
-                                        alt={counselor?.firstName}
+                                        src={counselor?.picture || defaultImage}
+                                        alt={counselor?.name}
                                         className={styles.counselorImage}
                                     />
                                     <div>
                                         <h3 className={styles.counselorName}>
-                                            {`${counselor?.firstName} ${counselor?.lastName}`}
+                                            {`${counselor?.name}`}
                                         </h3>
-                                        <p className={styles.counselorSpecialty}>
-                                            {counselor?.bio}
-                                        </p>
                                     </div>
                                 </div>
 

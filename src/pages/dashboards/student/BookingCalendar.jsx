@@ -3,10 +3,39 @@ import { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaArrowLeft, FaArrowRight, FaCheck, FaClock } from 'react-icons/fa';
 import styles from './BookingCalendar.module.css';
 import axiosInstance from "../../../utils/axiosInstance.jsx";
-import {useAuth} from "../../../hooks/AuthenticationContext.jsx";
+import { useAuth } from "../../../hooks/AuthenticationContext.jsx";
 
-// Days of the week
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+// Days of the week mapping
+const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+const DAY_NAMES = {
+    sunday: 'Sunday',
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday'
+};
+
+// Helper function to get day name from date
+const getDayName = (date) => {
+    return DAYS_OF_WEEK[date.getDay()];
+};
+
+// Helper function to format date as YYYY-MM-DD
+const formatDateString = (date) => {
+    return date.toISOString().split('T')[0];
+};
+
+// Helper function to get start of week (Monday)
+const getStartOfWeek = (date) => {
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday as start of week
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(diff);
+    return startOfWeek;
+};
 
 // Loading skeleton component
 const LoadingSkeleton = () => (
@@ -14,13 +43,11 @@ const LoadingSkeleton = () => (
         <div className={styles.loadingHeader}>
             <div className={styles.skeletonPulse} style={{ width: '150px', height: '24px' }}></div>
         </div>
-
         <div className={styles.loadingNavigation}>
             <div className={styles.skeletonPulse} style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div>
             <div className={styles.skeletonPulse} style={{ width: '200px', height: '20px' }}></div>
             <div className={styles.skeletonPulse} style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div>
         </div>
-
         <div className={styles.loadingGrid}>
             <div className={styles.loadingTimeColumn}>
                 <div className={styles.skeletonPulse} style={{ width: '100px', height: '60px', marginBottom: '1px' }}></div>
@@ -32,8 +59,7 @@ const LoadingSkeleton = () => (
                     }}></div>
                 ))}
             </div>
-
-            {Array.from({ length: 5 }).map((_, dayIndex) => (
+            {Array.from({ length: 7 }).map((_, dayIndex) => (
                 <div key={dayIndex} className={styles.loadingDayColumn}>
                     <div className={styles.skeletonPulse} style={{ width: '100%', height: '60px', marginBottom: '1px' }}></div>
                     {Array.from({ length: 6 }).map((_, slotIndex) => (
@@ -46,7 +72,6 @@ const LoadingSkeleton = () => (
                 </div>
             ))}
         </div>
-
         <div className={styles.loadingSpinner}>
             <div className={styles.spinner}></div>
             <span>Loading available time slots...</span>
@@ -54,34 +79,30 @@ const LoadingSkeleton = () => (
     </div>
 );
 
-const BookingCalendar = ({ counsellorId, onBookSlot, onClose }) => {
-    const {accessToken} = useAuth()
+const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) => {
+    const { accessToken } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(new Date());
-    const [isLoading, setIsLoading] = useState(true); // Start with loading true
-    const [weekDays, setWeekDays] = useState([]);
-    const [selectedSlot, setSelectedSlot] = useState({ date: null, slotId: null });
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedSlot, setSelectedSlot] = useState(null);
     const [bookedSlots, setBookedSlots] = useState([]);
-    const [timeslots, setTimeSlots] = useState([
-        { id: 1, start: '9:00', end: '10:00', label: '9:00 - 10:00' },
-        { id: 2, start: '10:15', end: '11:15', label: '10:15 - 11:15' },
-        { id: 3, start: '11:30', end: '12:30', label: '11:30 - 12:30' },
-        { id: 4, start: '14:00', end: '15:00', label: '2:00 - 3:00' },
-        { id: 5, start: '15:15', end: '16:15', label: '3:15 - 4:15' },
-        { id: 6, start: '16:30', end: '17:00', label: '4:30 - 5:00' }
-    ])
+    const [weekData, setWeekData] = useState([]);
 
+    // Initialize calendar on component mount
     useEffect(() => {
         initializeCalendar();
     }, []);
 
+    // Update week data when current week or dependencies change
+    useEffect(() => {
+        if (workCalendar && !isLoading) {
+            generateWeekData();
+        }
+    }, [currentWeek, workCalendar, bookedSlots, isLoading]);
+
     const initializeCalendar = async () => {
         setIsLoading(true);
         try {
-            // Fetch both booked slots and time slots concurrently
-            await Promise.all([
-                fetchBookedSlots(),
-                fetchTimeSlots()
-            ]);
+            await fetchBookedSlots();
         } catch (error) {
             console.error('Error initializing calendar:', error);
         } finally {
@@ -95,130 +116,148 @@ const BookingCalendar = ({ counsellorId, onBookSlot, onClose }) => {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
-            })
-            console.log('fetching booked slots')
+            });
+
             if (response.status === 200) {
-                console.log('fetching booked slots was successful: ', response.data)
-                setBookedSlots(response.data)
+                console.log('Booked slots fetched successfully:', response.data);
+                setBookedSlots(response.data || []);
             }
         } catch (error) {
-            console.log(error)
+            console.error('Error fetching booked slots:', error);
+            setBookedSlots([]);
         }
-    }
+    };
 
-    const fetchTimeSlots = async () => {
-        try {
-            const response = await axiosInstance.get('/api/booking/time-slots', {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            })
-            if (response.status === 200) {
-                setTimeSlots(response.data)
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-    // Mock function to check counselor availability
-    const getCounselorAvailability = (counselorId, date) => {
-        // Get current date at midnight for accurate comparison
+    const generateWeekData = () => {
+        const startOfWeek = getStartOfWeek(new Date(currentWeek));
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Set the input date to midnight for comparison
-        const checkDate = new Date(date);
-        checkDate.setHours(0, 0, 0, 0);
+        const weekDays = [];
 
-        // If the date is before today, mark all slots as unavailable
-        if (checkDate < today) {
-            return Array(6).fill(false);
+        // Generate 7 days starting from Monday
+        for (let i = 0; i < 7; i++) {
+            const currentDate = new Date(startOfWeek);
+            currentDate.setDate(startOfWeek.getDate() + i);
+
+            const dayName = getDayName(currentDate);
+            const dayConfig = workCalendar[dayName];
+
+            // Only include days that have configuration and are enabled
+            if (dayConfig && dayConfig.enabled && dayConfig.timeslots) {
+                const dateString = formatDateString(currentDate);
+                const isPastDate = currentDate < today;
+
+                const dayData = {
+                    date: new Date(currentDate),
+                    dayName: DAY_NAMES[dayName],
+                    dayOfMonth: currentDate.getDate(),
+                    dateString,
+                    isPastDate,
+                    slots: dayConfig.timeslots.map(slot => ({
+                        id: slot.id,
+                        start: slot.start,
+                        end: slot.end,
+                        label: slot.label,
+                        isBooked: bookedSlots.some(bookedSlot =>
+                            bookedSlot.date === dateString && bookedSlot.slotId === slot.id
+                        ),
+                        isAvailable: !isPastDate && !bookedSlots.some(bookedSlot =>
+                            bookedSlot.date === dateString && bookedSlot.slotId === slot.id
+                        )
+                    }))
+                };
+
+                weekDays.push(dayData);
+            }
         }
 
-        const dayOfWeek = date.getDay();
-        const availabilityMap = {
-            1: [true, true, true, true, true, true],
-            2: [true, true, true, true, true, true],
-            3: [true, true, true, true, true, true],
-            4: [true, true, true, true, true, true],
-            5: [true, true, true, true, true, true],
-            6: [false, false, false, false, false, false],
-            0: [false, false, false, false, false, false],
-        };
-        return availabilityMap[dayOfWeek] || Array(6).fill(false);
+        setWeekData(weekDays);
     };
 
-    // Mock function to check if a slot is already booked
-    const isSlotBooked = (counselorId, date, slotId) => {
-        const dateStr = date.toISOString().split('T')[0];
-        return bookedSlots.some(slot => slot.date === dateStr && slot.slotId === slotId);
-    };
+    const getAllUniqueTimeSlots = () => {
+        if (!workCalendar) return [];
 
-    useEffect(() => {
-        if (!isLoading) {
-            const days = [];
-            const currentDate = getStartOfWeek(currentWeek);
+        const allSlots = new Map();
 
-            for (let i = 0; i < 5; i++) {
-                const date = new Date(currentDate);
-                date.setDate(date.getDate() + i);
-                const availability = getCounselorAvailability(counsellorId, date);
-
-                days.push({
-                    date,
-                    dayName: DAYS[i],
-                    dayOfMonth: date.getDate(),
-                    slots: timeslots.map((slot, index) => ({
-                        id: slot.id,
-                        isAvailable: availability[index],
-                        isBooked: isSlotBooked(counsellorId, date, slot.id),
-                    })),
+        Object.values(workCalendar).forEach(dayConfig => {
+            if (dayConfig && dayConfig.enabled && dayConfig.timeslots) {
+                dayConfig.timeslots.forEach(slot => {
+                    const key = `${slot.start}-${slot.end}`;
+                    if (!allSlots.has(key)) {
+                        allSlots.set(key, {
+                            id: slot.id,
+                            start: slot.start,
+                            end: slot.end,
+                            label: slot.label
+                        });
+                    }
                 });
             }
-            setWeekDays(days);
-        }
-    }, [counsellorId, currentWeek, bookedSlots, timeslots, isLoading]);
+        });
 
-    const getStartOfWeek = (date) => {
-        const day = date.getDay();
-        const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(date.setDate(diff));
+        return Array.from(allSlots.values()).sort((a, b) => a.start.localeCompare(b.start));
     };
 
     const goToPreviousWeek = () => {
         const prevWeek = new Date(currentWeek);
         prevWeek.setDate(prevWeek.getDate() - 7);
         setCurrentWeek(prevWeek);
+        setSelectedSlot(null);
     };
 
     const goToNextWeek = () => {
         const nextWeek = new Date(currentWeek);
         nextWeek.setDate(nextWeek.getDate() + 7);
         setCurrentWeek(nextWeek);
+        setSelectedSlot(null);
     };
 
     const formatDateRange = () => {
-        const startDate = getStartOfWeek(currentWeek);
+        const startDate = getStartOfWeek(new Date(currentWeek));
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 4);
+        endDate.setDate(endDate.getDate() + 6);
+
         const options = { month: 'short', day: 'numeric' };
-        return `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', options)}`;
+        const startStr = startDate.toLocaleDateString('en-US', options);
+        const endStr = endDate.toLocaleDateString('en-US', options);
+
+        return `${startStr} - ${endStr}`;
     };
 
-    const handleSlotClick = (date, slotId, isAvailable, isBooked) => {
-        if (!isAvailable || isBooked) return;
-        setSelectedSlot({ date, slotId });
+    const handleSlotClick = (dayData, slot) => {
+        if (!slot.isAvailable || slot.isBooked || dayData.isPastDate) return;
+
+        setSelectedSlot({
+            date: dayData.date,
+            dateString: dayData.dateString,
+            slotId: slot.id,
+            slot: slot,
+            dayName: dayData.dayName
+        });
     };
 
     const handleBooking = () => {
-        if (selectedSlot.date && selectedSlot.slotId !== null) {
-            const selectedSlotLabel = timeslots.find(slot => slot.id === selectedSlot.slotId)?.label;
-            if (selectedSlotLabel) {
-                onBookSlot(selectedSlot.date, selectedSlotLabel,selectedSlot.slotId);
-            }
+        if (selectedSlot) {
+            onBookSlot(selectedSlot.date, selectedSlot.slot.label, selectedSlot.slotId);
         }
     };
+
+    const allTimeSlots = getAllUniqueTimeSlots();
+
+    if (isLoading) {
+        return (
+            <div className={styles.calendarModalOverlay}>
+                <div className={styles.calendarModal}>
+                    <div className={styles.calendarHeader}>
+                        <h2>Book a Session</h2>
+                        <button className={styles.closeButton} onClick={onClose}>×</button>
+                    </div>
+                    <LoadingSkeleton />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.calendarModalOverlay}>
@@ -228,91 +267,109 @@ const BookingCalendar = ({ counsellorId, onBookSlot, onClose }) => {
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
 
-                {isLoading ? (
-                    <LoadingSkeleton />
+                <div className={styles.calendarNavigation}>
+                    <button onClick={goToPreviousWeek} className={styles.navButton}>
+                        <FaArrowLeft />
+                    </button>
+                    <div className={styles.currentWeek}>
+                        <FaCalendarAlt className={styles.calendarIcon} />
+                        <span>{formatDateRange()}</span>
+                    </div>
+                    <button onClick={goToNextWeek} className={styles.navButton}>
+                        <FaArrowRight />
+                    </button>
+                </div>
+
+                {weekData.length === 0 ? (
+                    <div className={styles.noAvailability}>
+                        <p>No available time slots for this week.</p>
+                    </div>
                 ) : (
-                    <>
-                        <div className={styles.calendarNavigation}>
-                            <button onClick={goToPreviousWeek} className={styles.navButton}>
-                                <FaArrowLeft />
-                            </button>
-                            <div className={styles.currentWeek}>
-                                <FaCalendarAlt className={styles.calendarIcon} />
-                                <span>{formatDateRange()}</span>
+                    <div className={styles.calendarGrid}>
+                        {/* Time labels column */}
+                        <div className={styles.timeLabelsColumn}>
+                            <div className={styles.dayHeader}>
+                                <div className={styles.dayName}>TIME</div>
+                                <div className={styles.dayDate}>SLOT</div>
                             </div>
-                            <button onClick={goToNextWeek} className={styles.navButton}>
-                                <FaArrowRight />
-                            </button>
-                        </div>
-
-                        <div className={styles.calendarGrid}>
-                            <div className={styles.timeLabelsColumn}>
-                                <div className={styles.dayHeader}>
-                                    <div className={styles.dayName}>TIME</div>
-                                    <div className={styles.dayDate}>SLOT</div>
-                                </div>
-                                {timeslots.map(slot => (
-                                    <div key={slot.id} className={styles.timeLabel}>
-                                        <FaClock className={styles.timeIcon} />
-                                        <span>{slot.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {weekDays.map(day => (
-                                <div key={day.dayName} className={styles.dayColumn}>
-                                    <div className={styles.dayHeader}>
-                                        <div className={styles.dayName}>{day.dayName}</div>
-                                        <div className={styles.dayDate}>{day.dayOfMonth}</div>
-                                    </div>
-                                    {day.slots.map(slot => (
-                                        <div
-                                            key={slot.id}
-                                            className={`${styles.timeSlot} 
-                                            ${!slot.isAvailable ? styles.unavailable : ''} 
-                                            ${slot.isBooked ? styles.booked : ''} 
-                                            ${selectedSlot.date && selectedSlot.date.toDateString() === day.date.toDateString() &&
-                                            selectedSlot.slotId === slot.id ? styles.selected : ''}`}
-                                            onClick={() => handleSlotClick(day.date, slot.id, slot.isAvailable, slot.isBooked)}
-                                        >
-                                            {slot.isBooked ? (
-                                                <span className={styles.bookedLabel}>Booked</span>
-                                            ) : slot.isAvailable ? (
-                                                <span className={styles.availableLabel}>Available</span>
-                                            ) : (
-                                                <span className={styles.unavailableLabel}>Unavailable</span>
-                                            )}
-                                        </div>
-                                    ))}
+                            {allTimeSlots.map(timeSlot => (
+                                <div key={timeSlot.id} className={styles.timeLabel}>
+                                    <FaClock className={styles.timeIcon} />
+                                    <span>{timeSlot.label}</span>
                                 </div>
                             ))}
                         </div>
 
-                        {selectedSlot.date && selectedSlot.slotId !== null && (
-                            <div className={styles.bookingConfirmation}>
-                                <div className={styles.selectedSlotInfo}>
-                                    <p>
-                                        <strong>Selected Time:</strong> {
-                                        timeslots.find(slot => slot.id === selectedSlot.slotId)?.label
-                                    }
-                                    </p>
-                                    <p>
-                                        <strong>Date:</strong> {
-                                        selectedSlot.date.toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })
-                                    }
-                                    </p>
+                        {/* Day columns */}
+                        {weekData.map(dayData => (
+                            <div key={`${dayData.dayName}-${dayData.dayOfMonth}`} className={styles.dayColumn}>
+                                <div className={styles.dayHeader}>
+                                    <div className={styles.dayName}>{dayData.dayName}</div>
+                                    <div className={styles.dayDate}>{dayData.dayOfMonth}</div>
                                 </div>
-                                <button className={styles.bookButton} onClick={handleBooking}>
-                                    <FaCheck /> Confirm Booking
-                                </button>
+
+                                {allTimeSlots.map(timeSlot => {
+                                    const daySlot = dayData.slots.find(slot =>
+                                        slot.start === timeSlot.start && slot.end === timeSlot.end
+                                    );
+
+                                    const isSelected = selectedSlot &&
+                                        selectedSlot.dateString === dayData.dateString &&
+                                        selectedSlot.slotId === timeSlot.id;
+
+                                    if (!daySlot) {
+                                        // No slot available for this time on this day
+                                        return (
+                                            <div key={timeSlot.id} className={`${styles.timeSlot} ${styles.unavailable}`}>
+                                                <span className={styles.unavailableLabel}>N/A</span>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div
+                                            key={daySlot.id}
+                                            className={`${styles.timeSlot} 
+                                                ${daySlot.isBooked ? styles.booked : ''} 
+                                                ${!daySlot.isAvailable ? styles.unavailable : ''} 
+                                                ${isSelected ? styles.selected : ''}
+                                                ${dayData.isPastDate ? styles.pastDate : ''}`}
+                                            onClick={() => handleSlotClick(dayData, daySlot)}
+                                        >
+                                            {daySlot.isBooked ? (
+                                                <span className={styles.bookedLabel}>Booked</span>
+                                            ) : daySlot.isAvailable ? (
+                                                <span className={styles.availableLabel}>Available</span>
+                                            ) : (
+                                                <span className={styles.unavailableLabel}>N/A</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        )}
-                    </>
+                        ))}
+                    </div>
+                )}
+
+                {selectedSlot && (
+                    <div className={styles.bookingConfirmation}>
+                        <div className={styles.selectedSlotInfo}>
+                            <p>
+                                <strong>Selected Time:</strong> {selectedSlot.slot.label}
+                            </p>
+                            <p>
+                                <strong>Date:</strong> {selectedSlot.date.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}
+                            </p>
+                        </div>
+                        <button className={styles.bookButton} onClick={handleBooking}>
+                            <FaCheck /> Confirm Booking
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

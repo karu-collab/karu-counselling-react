@@ -45,9 +45,6 @@ export default function StudentDashboard() {
         fetchCounsellors(currentPage);
     }, [currentPage]);
 
-    useEffect(() => {
-        console.log('counsellors: ',counsellors)
-    },[counsellors])
 
     const fetchCounsellors = async (page = 1) => {
         try {
