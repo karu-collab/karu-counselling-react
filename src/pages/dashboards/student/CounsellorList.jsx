@@ -3,7 +3,7 @@ import styles from './CounsellorList.module.css';
 
 
 
-const CounsellorList = ({counsellors,onBookSession}) => {
+const CounsellorList = ({counsellors, onBookAppointment}) => {
 
 
     return (
@@ -16,7 +16,7 @@ const CounsellorList = ({counsellors,onBookSession}) => {
                         name={counsellor.name}
                         email={counsellor.email}
                         picture={counsellor.picture}
-                        onBookSession={onBookSession}
+                        onBookAppointment={onBookAppointment}
                     />
                 ))}
             </div>

@@ -81,26 +81,28 @@ export default function StudentDashboard() {
 
             const response = await axiosInstance.get(`${BASE_URL}/appointment/by-user/${user.id}`);
 
+            console.log('appointment response: ',response)
+
             if (response.data && response.data.appointments) {
                 // Transform appointments to match the expected format
                 const transformedAppointments = response.data.appointments.map(appointment => ({
                     id: appointment._id,
                     counsellor: {
-                        id: appointment.users_info?.counsellor?._id,
-                        name: appointment.users_info?.counsellor?.name,
-                        email: appointment.users_info?.counsellor?.email,
+                        id: appointment.counsellor_id,
+                        name: appointment.counsellor_name,
+                        email: appointment.counsellor_email,
                         image: appointment.users_info?.counsellor?.image
                     },
                     client: {
-                        id: appointment.users_info?.client_info?.id,
-                        name: appointment.users_info?.client_info?.full_name,
-                        email: appointment.users_info?.client_info?.email
+                        id: appointment.client_id,
+                        name: appointment.client_name,
+                        email: appointment.client_email
                     },
-                    date: appointment.booked_slot?.date,
-                    timeSlot: appointment.booked_slot?.timeSlot,
-                    notes: appointment.booked_slot?.notes,
+                    date: appointment?.date,
+                    timeSlot: appointment?.timeSlot,
+                    notes: appointment?.notes,
                     status: appointment.status || 'PENDING',
-                    description: appointment.booked_slot?.notes || 'Counselling Session',
+                    description: appointment?.notes || 'Counselling Session',
                     createdAt: appointment.created_at,
                     updatedAt: appointment.updated_at
                 }));

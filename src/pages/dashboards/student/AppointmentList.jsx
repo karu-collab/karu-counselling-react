@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Calendar, Clock, User, ArrowRight, Filter, ChevronDown, MoreHorizontal, Edit, Trash2, RefreshCw } from 'lucide-react';
 import styles from './AppointmentList.module.css';
 import defaultImage from '../../../assets/logo.jpg';
@@ -29,6 +29,9 @@ const AppointmentList = ({
         { value: 'rescheduled', label: 'Rescheduled', count: appointments.filter(a => a.status.toLowerCase() === 'rescheduled').length }
     ];
 
+    useEffect(() => {
+        console.log('appointments: ', appointments)
+    }, [appointments]);
     const getStatusColor = (status) => {
         const statusLower = status.toLowerCase();
         switch (statusLower) {

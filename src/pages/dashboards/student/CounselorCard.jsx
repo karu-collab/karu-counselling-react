@@ -3,12 +3,12 @@ import { useState } from 'react';
 import styles from './CounselorCard.module.css';
 import defaultImage from '../../../assets/logo.jpg';
 
-const CounselorCard = ({ id, name, email, picture, onBookSession }) => {
+const CounselorCard = ({ id, name, email, picture, onBookAppointment }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
 
     const handleBookSession = () => {
-        onBookSession(id);
+        onBookAppointment(id);
     };
 
     const handleImageError = () => {
