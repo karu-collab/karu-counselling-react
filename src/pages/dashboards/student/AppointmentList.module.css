@@ -141,14 +141,14 @@
     font-weight: 600;
 }
 
-/* Sessions List */
-.sessionsList {
+/* Appointments List */
+.appointmentsList {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.sessionCard {
+.appointmentCard {
     background-color: var(--card-bg);
     border-radius: 0.75rem;
     border: 1px solid var(--card-border);
@@ -157,12 +157,12 @@
     transition: all 0.2s ease;
 }
 
-.sessionCard:hover {
+.appointmentCard:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     transform: translateY(-2px);
 }
 
-.sessionContent {
+.appointmentContent {
     padding: 1.5rem;
 }
 
@@ -191,21 +191,21 @@
     border: 2px solid var(--card-bg);
 }
 
-/* Session Info */
-.sessionInfo {
+/* Appointment Info */
+.appointmentInfo {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     width: 100%;
 }
 
-.sessionHeader {
+.appointmentHeader {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
 }
 
-.sessionDetails {
+.appointmentDetails {
     flex: 1;
     min-width: 0;
 }
@@ -218,7 +218,7 @@
     line-height: 1.4;
 }
 
-.sessionDescription {
+.appointmentDescription {
     color: var(--text-color-secondary);
     margin: 0 0 0.75rem 0;
     line-height: 1.5;
@@ -228,7 +228,7 @@
     overflow: hidden;
 }
 
-.sessionMeta {
+.appointmentMeta {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -296,7 +296,7 @@
 }
 
 /* Action Buttons */
-.sessionActions {
+.appointmentActions {
     display: flex;
     justify-content: flex-end;
 }
@@ -407,11 +407,11 @@
         font-size: 1.5rem;
     }
 
-    .sessionContent {
+    .appointmentContent {
         padding: 1rem;
     }
 
-    .sessionHeader {
+    .appointmentHeader {
         flex-direction: column;
         gap: 0.75rem;
     }
@@ -420,7 +420,7 @@
         align-self: flex-start;
     }
 
-    .sessionMeta {
+    .appointmentMeta {
         gap: 0.75rem;
     }
 

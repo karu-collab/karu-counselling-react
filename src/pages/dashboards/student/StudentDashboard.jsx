@@ -5,7 +5,7 @@ import {useAuth} from "../../../hooks/AuthenticationContext.jsx";
 import {useNavigate} from "react-router-dom";
 import { Calendar, MessageCircle, Bell, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import CounsellorList from "./CounsellorList.jsx";
-import SessionList from "./SessionList.jsx";
+import AppointmentList from "./AppointmentList.jsx";
 import BookingModal from "./BookingModal.jsx";
 import axiosInstance from "../../../utils/axiosInstance.jsx";
 
@@ -17,7 +17,9 @@ export default function StudentDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('book');
-    const [sessions, setSessions] = useState([]);
+    const [appointments, setAppointments] = useState([]);
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+    const [appointmentsError, setAppointmentsError] = useState(null);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedCounsellor, setSelectedCounsellor] = useState(null);
 
@@ -28,23 +30,17 @@ export default function StudentDashboard() {
     const [pageLimit] = useState(10); // Items per page
 
     const {user} = useAuth()
-    const [selectedDate, setSelectedDate] = useState('');
-    const [selectedTime, setSelectedTime] = useState('');
-    const [studentInfo, setStudentInfo] = useState({
-        name: '',
-        studentId: '',
-        email: '',
-        phone: '',
-        reason: ''
-    });
-    const [bookings, setBookings] = useState([]);
-    const [showBookingForm, setShowBookingForm] = useState(false);
-    const [bookingStatus, setBookingStatus] = useState(null);
 
     useEffect(() => {
         fetchCounsellors(currentPage);
     }, [currentPage]);
 
+    // Fetch appointments when switching to appointments tab
+    useEffect(() => {
+        if (activeTab === 'appointments' && user?.id) {
+            fetchAppointments();
+        }
+    }, [activeTab, user?.id]);
 
     const fetchCounsellors = async (page = 1) => {
         try {
@@ -73,40 +69,60 @@ export default function StudentDashboard() {
         }
     };
 
+    const fetchAppointments = async () => {
+        if (!user?.id) {
+            console.error('User ID not available');
+            return;
+        }
+
+        try {
+            setAppointmentsLoading(true);
+            setAppointmentsError(null);
+
+            const response = await axiosInstance.get(`${BASE_URL}/appointment/by-user/${user.id}`);
+
+            if (response.data && response.data.appointments) {
+                // Transform appointments to match the expected format
+                const transformedAppointments = response.data.appointments.map(appointment => ({
+                    id: appointment._id,
+                    counsellor: {
+                        id: appointment.users_info?.counsellor?._id,
+                        name: appointment.users_info?.counsellor?.name,
+                        email: appointment.users_info?.counsellor?.email,
+                        image: appointment.users_info?.counsellor?.image
+                    },
+                    client: {
+                        id: appointment.users_info?.client_info?.id,
+                        name: appointment.users_info?.client_info?.full_name,
+                        email: appointment.users_info?.client_info?.email
+                    },
+                    date: appointment.booked_slot?.date,
+                    timeSlot: appointment.booked_slot?.timeSlot,
+                    notes: appointment.booked_slot?.notes,
+                    status: appointment.status || 'PENDING',
+                    description: appointment.booked_slot?.notes || 'Counselling Session',
+                    createdAt: appointment.created_at,
+                    updatedAt: appointment.updated_at
+                }));
+
+                setAppointments(transformedAppointments);
+            }
+        } catch (error) {
+            console.error('Error fetching appointments:', error);
+            setAppointmentsError('Failed to load appointments. Please try again.');
+            setAppointments([]);
+        } finally {
+            setAppointmentsLoading(false);
+        }
+    };
+
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
         }
     };
 
-    const calendarEvents = bookings.map(booking => ({
-        id: booking.id,
-        title: `${booking.counsellor} - ${booking.studentInfo.name}`,
-        start: new Date(`${booking.date}T${booking.time}`),
-        end: new Date(`${booking.date}T${booking.time}`),
-        resource: booking
-    }));
-
-    const handleBookingSubmit = () => {
-        if (!selectedDate || !selectedTime || !selectedCounsellor || !studentInfo.name) {
-            alert('Please fill in all fields.');
-            return;
-        }
-
-        const newBooking = {
-            id: bookings.length + 1,
-            date: selectedDate,
-            time: selectedTime,
-            counsellor: selectedCounsellor,
-            studentInfo: { ...studentInfo }
-        };
-
-        setBookings([...bookings, newBooking]);
-        setShowBookingForm(false);
-        setBookingStatus('Booking successful!');
-    };
-
-    const handleBookSession = (counselorId) => {
+    const handleBookAppointment = (counselorId) => {
         const counselor = counsellors.find((c) => c._id === counselorId);
         if (counselor) {
             setSelectedCounsellor(counselor);
@@ -118,35 +134,151 @@ export default function StudentDashboard() {
 
     const handleCloseBookingModal = () => {
         setIsBookingModalOpen(false);
+        setSelectedCounsellor(null);
     };
 
     const handleBookingConfirm = async (date, timeSlot, notes, slotId) => {
-        if (!selectedCounsellor) {
-            alert('No counselor selected.');
+        if (!selectedCounsellor || !user) {
+            alert('No counselor selected or student name is invalid.');
             return;
         }
-        // Implement booking confirmation logic here
+
+        // Only include essential user information for the booking
+        const usersInfo = {
+            counsellor: {
+                _id: selectedCounsellor._id,
+                name: selectedCounsellor.name,
+                email: selectedCounsellor.email
+            },
+            client_info: {
+                id: user.id,
+                email: user.email,
+                full_name: user.full_name || `${user.first_name} ${user.last_name}`,
+                first_name: user.first_name || user.given_name,
+                last_name: user.last_name || user.family_name
+            }
+        };
+
+        const bookedSlot = {
+            date,
+            timeSlot,
+            notes,
+            slotId
+        }
+
+        try {
+            setLoading(true)
+            const response = await axiosInstance.post(`${BASE_URL}/booking/add`, {
+                counsellor_id: selectedCounsellor._id,
+                client_id: user.id,
+                booked_slot: bookedSlot,
+                users_info: usersInfo
+            });
+
+            console.log("Booking response: ", response);
+
+            // Show success message
+            alert('Appointment booked successfully!');
+
+            // Close modal
+            handleCloseBookingModal();
+
+            // Refresh appointments if we're on appointments tab
+            if (activeTab === 'appointments') {
+                fetchAppointments();
+            }
+
+        } catch(error) {
+            console.error('Booking error:', error);
+            alert('Failed to book appointment. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleRescheduleSession = (sessionId) => {
-        alert(`Rescheduling session #${sessionId}`);
+    const handleUpdateAppointmentStatus = async (appointmentId, newStatus) => {
+        try {
+            const response = await axiosInstance.patch(
+                `${BASE_URL}/appointment/update-status/${appointmentId}`,
+                newStatus,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data) {
+                // Update local state
+                setAppointments(prevAppointments =>
+                    prevAppointments.map(appointment =>
+                        appointment.id === appointmentId
+                            ? { ...appointment, status: newStatus }
+                            : appointment
+                    )
+                );
+
+                alert(`Appointment status updated to ${newStatus.toLowerCase()}`);
+            }
+        } catch (error) {
+            console.error('Error updating appointment status:', error);
+            alert('Failed to update appointment status');
+        }
     };
 
-    const handleCancelSession = (sessionId) => {
-        setSessions(sessions.map(session =>
-            session.id === sessionId
-                ? { ...session, status: 'cancelled' }
-                : session
-        ));
-        alert(`Session #${sessionId} cancelled`);
+    const handleRescheduleAppointment = (appointmentId) => {
+        // Find the appointment and counsellor
+        const appointment = appointments.find(a => a.id === appointmentId);
+        if (appointment && appointment.counsellor) {
+            const counselor = counsellors.find(c => c._id === appointment.counsellor.id);
+            if (counselor) {
+                setSelectedCounsellor(counselor);
+                setIsBookingModalOpen(true);
+            } else {
+                // If counsellor not in current list, fetch or handle differently
+                alert('Counsellor information not available for rescheduling');
+            }
+        }
     };
 
-    const handleBookAgain = (sessionId) => {
-        const session = sessions.find(s => s.id === sessionId);
-        if (session) {
-            const counselor = counsellors.find((c) => c.id === session.counselor.id);
-            setSelectedCounsellor(counselor);
-            setIsBookingModalOpen(true);
+    const handleCancelAppointment = async (appointmentId) => {
+        if (window.confirm('Are you sure you want to cancel this appointment?')) {
+            await handleUpdateAppointmentStatus(appointmentId, 'CANCELLED');
+        }
+    };
+
+    const handleDeleteAppointment = async (appointmentId) => {
+        if (window.confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+            try {
+                const response = await axiosInstance.delete(`${BASE_URL}/appointment/delete/${appointmentId}`);
+
+                if (response.data) {
+                    // Remove from local state
+                    setAppointments(prevAppointments =>
+                        prevAppointments.filter(appointment => appointment.id !== appointmentId)
+                    );
+
+                    alert('Appointment deleted successfully');
+                }
+            } catch (error) {
+                console.error('Error deleting appointment:', error);
+                alert('Failed to delete appointment');
+            }
+        }
+    };
+
+    const handleBookAgain = (appointmentId) => {
+        const appointment = appointments.find(a => a.id === appointmentId);
+        if (appointment && appointment.counsellor) {
+            const counselor = counsellors.find((c) => c._id === appointment.counsellor.id);
+            if (counselor) {
+                setSelectedCounsellor(counselor);
+                setIsBookingModalOpen(true);
+            } else {
+                // Switch to book tab to find counsellor
+                setActiveTab('book');
+                alert('Please find and select the counsellor from the available list');
+            }
         }
     };
 
@@ -211,14 +343,14 @@ export default function StudentDashboard() {
                         onClick={() => setActiveTab('book')}
                     >
                         <Calendar className={styles.tabIcon} />
-                        <span className={styles.tabText}>Book a Session</span>
+                        <span className={styles.tabText}>Book an Appointment</span>
                     </li>
                     <li
-                        className={`${styles.tabItem} ${activeTab === 'sessions' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('sessions')}
+                        className={`${styles.tabItem} ${activeTab === 'appointments' ? styles.activeTab : ''}`}
+                        onClick={() => setActiveTab('appointments')}
                     >
                         <Calendar className={styles.tabIcon} />
-                        <span className={styles.tabText}>My Sessions</span>
+                        <span className={styles.tabText}>My Appointments</span>
                     </li>
                     <li
                         className={`${styles.tabItem} ${activeTab === 'account' ? styles.activeTab : ''}`}
@@ -231,7 +363,7 @@ export default function StudentDashboard() {
             </div>
 
             <div className={styles.tabContent}>
-                {/* Book a Session Tab */}
+                {/* Book an Appointment Tab */}
                 {activeTab === 'book' && (
                     <div>
                         {loading ? (
@@ -258,7 +390,7 @@ export default function StudentDashboard() {
 
                                 <CounsellorList
                                     counsellors={counsellors}
-                                    onBookSession={handleBookSession}
+                                    onBookAppointment={handleBookAppointment}
                                 />
 
                                 {totalPages > 1 && <PaginationControls />}
@@ -272,25 +404,42 @@ export default function StudentDashboard() {
                     </div>
                 )}
 
-                {/* My Sessions Tab */}
-                {activeTab === 'sessions' && (
+                {/* My appointments Tab */}
+                {activeTab === 'appointments' && (
                     <div>
-                        {sessions && sessions.length > 0 ? (
-                            <SessionList
-                                sessions={sessions}
-                                onReschedule={handleRescheduleSession}
-                                onCancel={handleCancelSession}
+                        {appointmentsLoading ? (
+                            <div className={styles.loadingContainer}>
+                                <div className={styles.spinner}></div>
+                                <p>Loading appointments...</p>
+                            </div>
+                        ) : appointmentsError ? (
+                            <div className={styles.errorContainer}>
+                                <p className={styles.error}>{appointmentsError}</p>
+                                <button
+                                    onClick={fetchAppointments}
+                                    className={styles.retryButton}
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        ) : appointments && appointments.length > 0 ? (
+                            <AppointmentList
+                                appointments={appointments}
+                                onReschedule={handleRescheduleAppointment}
+                                onCancel={handleCancelAppointment}
                                 onBookAgain={handleBookAgain}
+                                onUpdateStatus={handleUpdateAppointmentStatus}
+                                onDelete={handleDeleteAppointment}
                             />
                         ) : (
                             <div className={styles.emptyState}>
-                                <h3>No Booked Sessions</h3>
-                                <p>You haven't booked any sessions yet. Book your first session with a counsellor!</p>
+                                <h3>No Appointments</h3>
+                                <p>You haven't booked any appointments yet. Book your first appointment with a counsellor!</p>
                                 <button
                                     onClick={() => setActiveTab('book')}
                                     className={styles.primaryButton}
                                 >
-                                    Book a Session
+                                    Book an appointment
                                 </button>
                             </div>
                         )}

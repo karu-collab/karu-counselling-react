@@ -9,7 +9,7 @@ function BaseLayout() {
             <main>
                 <Outlet />
             </main>
-            <elevenlabs-convai user_name="mimi" agent-id="agent_01jyc1hn76ee9v5nm2fzfkayvm"></elevenlabs-convai><script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+            {/*<elevenlabs-convai user_name="mimi" agent-id="agent_01jyc1hn76ee9v5nm2fzfkayvm"></elevenlabs-convai><script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>*/}
             <Footer />
         </>
     );

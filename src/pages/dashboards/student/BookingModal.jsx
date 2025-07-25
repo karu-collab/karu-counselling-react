@@ -86,7 +86,7 @@ export default function BookingModal({
                             </p>
 
                             <BookingCalendar
-                                counsellorId={counselor?.userId}
+                                counsellorId={counselor?._id}
                                 workCalendar={counselor?.work_calender}
                                 onBookSlot={handleDateTimeSelected}
                                 onClose={onClose}

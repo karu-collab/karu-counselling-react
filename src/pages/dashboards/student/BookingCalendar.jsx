@@ -4,7 +4,9 @@ import { FaCalendarAlt, FaArrowLeft, FaArrowRight, FaCheck, FaClock } from 'reac
 import styles from './BookingCalendar.module.css';
 import axiosInstance from "../../../utils/axiosInstance.jsx";
 import { useAuth } from "../../../hooks/AuthenticationContext.jsx";
+import axios from "axios";
 
+const BaseUrl = import.meta.env.VITE_BACKEND_URL;
 // Days of the week mapping
 const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -112,21 +114,19 @@ const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) =>
 
     const fetchBookedSlots = async () => {
         try {
-            const response = await axiosInstance.get(`/api/booking/booked-slots/${counsellorId}`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
-            });
+           const response = await axiosInstance.get(`${BaseUrl}/booking/booked-slots/${counsellorId}`);
+
 
             if (response.status === 200) {
                 console.log('Booked slots fetched successfully:', response.data);
-                setBookedSlots(response.data || []);
+                setBookedSlots(response.data.booked_slots || []);
             }
         } catch (error) {
             console.error('Error fetching booked slots:', error);
             setBookedSlots([]);
         }
     };
+
 
     const generateWeekData = () => {
         const startOfWeek = getStartOfWeek(new Date(currentWeek));
@@ -160,11 +160,14 @@ const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) =>
                         end: slot.end,
                         label: slot.label,
                         isBooked: bookedSlots.some(bookedSlot =>
-                            bookedSlot.date === dateString && bookedSlot.slotId === slot.id
+                            new Date(bookedSlot.date).toISOString().split('T')[0] === dateString &&
+                            bookedSlot.slotId === slot.id
                         ),
                         isAvailable: !isPastDate && !bookedSlots.some(bookedSlot =>
-                            bookedSlot.date === dateString && bookedSlot.slotId === slot.id
+                            new Date(bookedSlot.date).toISOString().split('T')[0] === dateString &&
+                            bookedSlot.slotId === slot.id
                         )
+
                     }))
                 };
 
@@ -174,6 +177,7 @@ const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) =>
 
         setWeekData(weekDays);
     };
+
 
     const getAllUniqueTimeSlots = () => {
         if (!workCalendar) return [];
