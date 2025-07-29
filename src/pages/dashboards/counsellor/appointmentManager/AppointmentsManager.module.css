@@ -1,0 +1,148 @@
+/* Add these styles to your AppointmentsManager.module.css file */
+
+/* Header Controls */
+.headerControls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filterSelect,
+.pageSizeSelect {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.9rem;
+}
+
+.filterSelect:focus,
+.pageSizeSelect:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Pagination Info */
+.paginationInfo {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Pagination Controls */
+.paginationControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 1rem 0;
+}
+
+.paginationButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.paginationButton:hover:not(.disabled) {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.paginationButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pageNumbers {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 1rem;
+}
+
+.pageButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageButton:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.pageButton.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.pageButton.active:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .headerControls {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .filterSelect,
+  .pageSizeSelect {
+    width: 100%;
+  }
+
+  .paginationControls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pageNumbers {
+    margin: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .paginationButton {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageNumbers {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+  }
+
+  .pageButton {
+    min-width: 2.5rem;
+    flex-shrink: 0;
+  }
+}

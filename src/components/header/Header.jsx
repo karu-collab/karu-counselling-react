@@ -14,11 +14,7 @@ export default function Header() {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Remove this redundant effect - use user directly from context
-    // useEffect(() => {
-    //     console.log('current user: ', currentUser)
-    //     setCurrentUser(user)
-    // },[user])
+
 
     const handleLogout = () => {
         logout()
