@@ -1,7 +1,7 @@
 import styles from "./CounsellorDashboard.module.css"
 import {useAuth} from "../../../hooks/AuthenticationContext.jsx";
 import {useNavigate} from "react-router-dom";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import { Calendar, MessageCircle, Bell, User } from 'lucide-react';
 import ArticleManager from "./articleManager/ArticleManager.jsx";
 import AppointmentsManager from "./appointmentManager/AppointmentsManager.jsx";

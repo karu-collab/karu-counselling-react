@@ -1,29 +1,41 @@
 import styles from './ArticlesPage.module.css';
-import { useParams} from "react-router-dom";
-import {useAuth} from "../../hooks/AuthenticationContext.jsx";
-import {useCallback, useEffect, useState} from "react";
+import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import Article from "./Article.jsx";
-import SampleArticles from './SampleArticles.jsx'
+
+const BaseUrl = import.meta.env.VITE_BACKEND_URL
+
 
 export default function ArticlesPage() {
     const { filter } = useParams();
-    const {baseUrl} = useAuth()
-    const [articles, setArticles] = useState(SampleArticles);
-    const [nextPageUrl, setNextPageUrl] = useState(`${baseUrl}/api/v1/articles/get-all?filter=${filter}&page=0&size=10`);
+
+    // State management
+    const [articles, setArticles] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [showArticle, setShowArticle] = useState(false);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalArticles, setTotalArticles] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+
+    // Filter and search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [publishedOnly, setPublishedOnly] = useState(false);
+    const [sortBy, setSortBy] = useState('newest');
+
+    const perPage = 10;
 
     // Function to close article modal
     const closeArticleModal = () => {
         setShowArticle(false);
         setSelectedArticle(null);
-        // Restore body scrolling
         document.body.style.overflow = 'unset';
     };
 
-    // Function to select article for preview (without modal)
+    // Function to select article for preview
     const selectArticleForPreview = (article) => {
         setSelectedArticle(article);
     };
@@ -54,31 +66,99 @@ export default function ArticlesPage() {
         }
     }, [articles, selectedArticle]);
 
+    // Build API URL with query parameters
+    const buildApiUrl = useCallback((page, loadMore = false) => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            per_page: perPage.toString(),
+        });
+
+        if (publishedOnly) {
+            params.append('published_only', 'true');
+        }
+
+        if (searchQuery.trim()) {
+            params.append('search', searchQuery.trim());
+        }
+
+        return `${BaseUrl}/articles/published/?${params.toString()}`;
+    }, [BaseUrl, publishedOnly, searchQuery]);
+
     // Fetch Articles Function
-    const fetchArticles = useCallback(async () => {
-        if (!nextPageUrl || isLoading) return;
+    const fetchArticles = useCallback(async (page = 1, loadMore = false) => {
+        if (isLoading) return;
 
         setIsLoading(true);
         try {
-            const response = await fetch(nextPageUrl);
+            const url = buildApiUrl(page, loadMore);
+            console.log('Fetching from:', url);
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log("API Response:", data);
 
-            console.log("data: ", data);
+            if (loadMore) {
+                // Append new articles to existing ones
+                setArticles(prevArticles => [...prevArticles, ...data.articles]);
+            } else {
+                // Replace articles (new search/filter)
+                setArticles(data.articles);
+                // Reset selected article when loading new data
+                setSelectedArticle(null);
+            }
 
-            setArticles((prevArticles) => [...prevArticles, ...data._embedded.articleList]);
-            setNextPageUrl(data._links.next?.href || null);
-            setHasMore(!!data._links.next);
+            // Update pagination state
+            setCurrentPage(data.page);
+            setTotalPages(data.total_pages);
+            setTotalArticles(data.total);
+            setHasMore(data.has_next);
+
         } catch (error) {
             console.error('Error fetching articles:', error);
+            // You might want to show an error message to the user here
         } finally {
             setIsLoading(false);
         }
-    }, [nextPageUrl, isLoading]);
+    }, [buildApiUrl, isLoading]);
 
+    // Load more articles (pagination)
+    const loadMoreArticles = useCallback(() => {
+        if (hasMore && !isLoading && currentPage < totalPages) {
+            fetchArticles(currentPage + 1, true);
+        }
+    }, [hasMore, isLoading, currentPage, totalPages, fetchArticles]);
+
+    // Handle search
+    const handleSearch = useCallback(() => {
+        setCurrentPage(1);
+        fetchArticles(1, false);
+    }, [fetchArticles]);
+
+    // Handle search input change with debounce
     useEffect(() => {
-        setNextPageUrl(`${baseUrl}/api/v1/articles/get-all?filter=${filter}&page=0&size=10`);
-        fetchArticles(); // Initial fetch
-    }, [filter]);
+        const debounceTimer = setTimeout(() => {
+            if (searchQuery !== '') {
+                handleSearch();
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(debounceTimer);
+    }, [searchQuery]);
+
+    // Handle filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+        fetchArticles(1, false);
+    }, [filter, publishedOnly]);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchArticles(1, false);
+    }, []);
 
     // Format date helper
     const formatDate = (dateString) => {
@@ -104,6 +184,11 @@ export default function ArticlesPage() {
         return content.substring(0, maxLength).trim() + '...';
     };
 
+    // Handle sort change
+    const handleSortChange = (e) => {
+        setSortBy(e.target.value);
+        // You can implement sorting logic here or pass it to the API
+    };
 
     return (
         <div className={styles.articlesPage}>
@@ -127,16 +212,24 @@ export default function ArticlesPage() {
                             type="text"
                             placeholder="Search articles..."
                             className={styles.searchInput}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
                     <div className={styles.filterButtons}>
-                        <button className={`${styles.filterButton} ${styles.active}`}>
+                        <button
+                            className={`${styles.filterButton} ${!publishedOnly ? styles.active : ''}`}
+                            onClick={() => setPublishedOnly(false)}
+                        >
                             All
                         </button>
-                        <button className={styles.filterButton}>Recent</button>
-                        <button className={styles.filterButton}>Popular</button>
-                        <button className={styles.filterButton}>Featured</button>
+                        <button
+                            className={`${styles.filterButton} ${publishedOnly ? styles.active : ''}`}
+                            onClick={() => setPublishedOnly(true)}
+                        >
+                            Published
+                        </button>
                     </div>
                 </div>
             </div>
@@ -146,30 +239,35 @@ export default function ArticlesPage() {
                 {/* Left Column - Articles List */}
                 <div className={styles.articlesColumn}>
                     <div className={styles.articlesHeader}>
-                        <h2 className={styles.columnTitle}>Articles ({articles.length})</h2>
+                        <h2 className={styles.columnTitle}>
+                            Articles ({totalArticles}) - Page {currentPage} of {totalPages}
+                        </h2>
                         <div className={styles.sortDropdown}>
-                            <select className={styles.sortSelect}>
+                            <select
+                                className={styles.sortSelect}
+                                value={sortBy}
+                                onChange={handleSortChange}
+                            >
                                 <option value="newest">Newest First</option>
                                 <option value="oldest">Oldest First</option>
-                                <option value="popular">Most Popular</option>
                                 <option value="title">Title A-Z</option>
                             </select>
                         </div>
                     </div>
 
                     <div className={styles.articlesList}>
-                        {articles.map((article, index) => (
+                        {articles.map((article) => (
                             <div
-                                key={article.articleId}
+                                key={article.id}
                                 className={`${styles.articleItem} ${
-                                    selectedArticle?.articleId === article.articleId ? styles.selected : ''
+                                    selectedArticle?.id === article.id ? styles.selected : ''
                                 }`}
                                 onClick={() => selectArticleForPreview(article)}
                             >
                                 <div className={styles.articleItemContent}>
-                                    {article.category && (
+                                    {article.tags && article.tags.length > 0 && (
                                         <span className={styles.categoryTag}>
-                                            {article.category}
+                                            {article.tags[0]}
                                         </span>
                                     )}
 
@@ -184,14 +282,14 @@ export default function ArticlesPage() {
                                     <div className={styles.articleItemMeta}>
                                         <div className={styles.authorInfo}>
                                             <div className={styles.authorAvatar}>
-                                                {article.author?.firstName?.charAt(0) || 'A'}
+                                                {article.author?.charAt(0) || 'A'}
                                             </div>
                                             <div className={styles.authorDetails}>
                                                 <span className={styles.authorName}>
-                                                    {article.author?.firstName} {article.author?.lastName}
+                                                    {article.author}
                                                 </span>
                                                 <span className={styles.articleDate}>
-                                                    {formatDate(article.createdAt || new Date())}
+                                                    {formatDate(article.created_at)}
                                                 </span>
                                             </div>
                                         </div>
@@ -200,6 +298,11 @@ export default function ArticlesPage() {
                                             <span className={styles.readingTime}>
                                                 {getReadingTime(article.content)}
                                             </span>
+                                            {article.published && (
+                                                <span className={styles.publishedBadge}>
+                                                    Published
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -208,17 +311,43 @@ export default function ArticlesPage() {
                             </div>
                         ))}
 
+                        {/* Load More Button */}
+                        {hasMore && (
+                            <div className={styles.loadMoreContainer}>
+                                <button
+                                    className={styles.loadMoreButton}
+                                    onClick={loadMoreArticles}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? 'Loading...' : 'Load More Articles'}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Loading indicator */}
+                        {isLoading && (
+                            <div className={styles.loadingIndicator}>
+                                <p>Loading articles...</p>
+                            </div>
+                        )}
+
+                        {/* No articles message */}
+                        {!isLoading && articles.length === 0 && (
+                            <div className={styles.noArticles}>
+                                <p>No articles found. Try adjusting your search or filters.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Right Column - Full Article  */}
+                {/* Right Column - Full Article Preview */}
                 <div className={styles.previewColumn}>
                     {selectedArticle ? (
                         <div className={styles.articlePreview}>
                             <div className={styles.previewHeader}>
-                                {selectedArticle.category && (
+                                {selectedArticle.tags && selectedArticle.tags.length > 0 && (
                                     <span className={styles.previewCategory}>
-                                        {selectedArticle.category}
+                                        {selectedArticle.tags[0]}
                                     </span>
                                 )}
 
@@ -229,7 +358,7 @@ export default function ArticlesPage() {
                                 <div className={styles.previewMeta}>
                                     <div className={styles.authorInfoLarge}>
                                         <div className={styles.authorAvatarLarge}>
-                                            {selectedArticle.author.charAt(0) || 'A'}
+                                            {selectedArticle.author?.charAt(0) || 'A'}
                                         </div>
                                         <div className={styles.authorDetailsLarge}>
                                             <span className={styles.authorNameLarge}>
@@ -237,12 +366,20 @@ export default function ArticlesPage() {
                                             </span>
                                             <div className={styles.articleMetaInfo}>
                                                 <span className={styles.articleDateLarge}>
-                                                    {formatDate(selectedArticle.createdAt || new Date())}
+                                                    {formatDate(selectedArticle.created_at)}
                                                 </span>
                                                 <span className={styles.separator}>•</span>
                                                 <span className={styles.readingTimeLarge}>
                                                     {getReadingTime(selectedArticle.content)}
                                                 </span>
+                                                {selectedArticle.published && (
+                                                    <>
+                                                        <span className={styles.separator}>•</span>
+                                                        <span className={styles.publishedStatus}>
+                                                            Published
+                                                        </span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -250,14 +387,11 @@ export default function ArticlesPage() {
                             </div>
 
                             <div className={styles.previewContent}>
-                                <div className={styles.previewContent}>
-                                    <Article
-                                        theArticle={selectedArticle}
-                                        isModal={true}
-                                        onClose={closeArticleModal}
-                                    />
-                                </div>
-
+                                <Article
+                                    theArticle={selectedArticle}
+                                    isModal={true}
+                                    onClose={closeArticleModal}
+                                />
                             </div>
 
                             {/* Article Stats */}
@@ -277,15 +411,27 @@ export default function ArticlesPage() {
                                         </span>
                                     </div>
                                     <div className={styles.insightItem}>
-                                        <span className={styles.insightLabel}>Published</span>
+                                        <span className={styles.insightLabel}>Created</span>
                                         <span className={styles.insightValue}>
-                                            {formatDate(selectedArticle.createdAt || new Date())}
+                                            {formatDate(selectedArticle.created_at)}
                                         </span>
                                     </div>
                                     <div className={styles.insightItem}>
-                                        <span className={styles.insightLabel}>Category</span>
+                                        <span className={styles.insightLabel}>Updated</span>
                                         <span className={styles.insightValue}>
-                                            {selectedArticle.category || 'General'}
+                                            {formatDate(selectedArticle.updated_at)}
+                                        </span>
+                                    </div>
+                                    <div className={styles.insightItem}>
+                                        <span className={styles.insightLabel}>Tags</span>
+                                        <span className={styles.insightValue}>
+                                            {selectedArticle.tags?.length || 0}
+                                        </span>
+                                    </div>
+                                    <div className={styles.insightItem}>
+                                        <span className={styles.insightLabel}>Status</span>
+                                        <span className={styles.insightValue}>
+                                            {selectedArticle.published ? 'Published' : 'Draft'}
                                         </span>
                                     </div>
                                 </div>
@@ -310,7 +456,6 @@ export default function ArticlesPage() {
                     )}
                 </div>
             </div>
-
         </div>
     );
 }
