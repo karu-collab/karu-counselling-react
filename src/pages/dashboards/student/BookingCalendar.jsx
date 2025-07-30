@@ -82,7 +82,7 @@ const LoadingSkeleton = () => (
 );
 
 const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) => {
-    const { accessToken } = useAuth();
+
     const [currentWeek, setCurrentWeek] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
     const [selectedSlot, setSelectedSlot] = useState(null);
@@ -160,16 +160,20 @@ const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) =>
                         end: slot.end,
                         label: slot.label,
                         isBooked: bookedSlots.some(bookedSlot =>
-                            new Date(bookedSlot.date).toISOString().split('T')[0] === dateString &&
+                            formatDateString(new Date(bookedSlot.date)) === dateString &&
                             bookedSlot.slotId === slot.id
                         ),
+
                         isAvailable: !isPastDate && !bookedSlots.some(bookedSlot =>
-                            new Date(bookedSlot.date).toISOString().split('T')[0] === dateString &&
+                            formatDateString(new Date(bookedSlot.date)) === dateString &&
                             bookedSlot.slotId === slot.id
                         )
 
+
                     }))
                 };
+
+                console.log('booked slots day data: ',dayData)
 
                 weekDays.push(dayData);
             }
@@ -231,6 +235,15 @@ const BookingCalendar = ({ counsellorId, workCalendar, onBookSlot, onClose }) =>
 
     const handleSlotClick = (dayData, slot) => {
         if (!slot.isAvailable || slot.isBooked || dayData.isPastDate) return;
+
+        console.log('selected slots: ',{
+            date: dayData.date,
+            dateString: dayData.dateString,
+            slotId: slot.id,
+            slot: slot,
+            dayName: dayData.dayName
+        })
+
 
         setSelectedSlot({
             date: dayData.date,

@@ -1,0 +1,345 @@
+/* RescheduleModal.module.css - Stripe-inspired design */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 37, 64, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modalContent {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(10, 37, 64, 0.1),
+    0 10px 10px -5px rgba(10, 37, 64, 0.04),
+    0 0 0 1px var(--border-color);
+    animation: slideIn 0.3s ease-out;
+    border: 1px solid var(--border-color);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0 24px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.modalHeader h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.025em;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.closeButton:hover {
+    background-color: var(--stripe-100);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
+
+.closeButton:active {
+    transform: scale(0.95);
+}
+
+.closeButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.appointmentInfo {
+    padding: 0 24px;
+    margin-bottom: 24px;
+    background: var(--stripe-50);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 0 24px 24px 24px;
+    border: 1px solid var(--stripe-200);
+}
+
+.appointmentInfo p {
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.appointmentInfo p:last-child {
+    margin-bottom: 0;
+}
+
+.appointmentInfo strong {
+    font-weight: 600;
+    color: var(--stripe-700);
+    margin-right: 8px;
+}
+
+.selectedSlotInfo {
+    padding: 20px;
+    margin: 0 24px 24px 24px;
+    background: linear-gradient(135deg, var(--primary-50), rgba(99, 91, 255, 0.05));
+    border-radius: 12px;
+    border: 1px solid var(--primary-200);
+    position: relative;
+    overflow: hidden;
+}
+
+.selectedSlotInfo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-tech);
+}
+
+.selectedSlotInfo h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-700);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.selectedSlotInfo h4::before {
+    content: '✓';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: var(--success-color);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.selectedSlotInfo p {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.selectedSlotInfo p:last-child {
+    margin-bottom: 0;
+}
+
+.selectedSlotInfo strong {
+    font-weight: 600;
+    color: var(--primary-700);
+    margin-right: 8px;
+}
+
+.calendarContainer {
+    padding: 0 24px;
+    margin-bottom: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin: 0 24px 24px 24px;
+}
+
+.calendarContainer > div:first-child {
+    padding: 20px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--stripe-50);
+    border-radius: 0 0 16px 16px;
+    justify-content: flex-end;
+}
+
+.actionButton {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.actionButton:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.2);
+}
+
+.cancelButton {
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-color);
+}
+
+.cancelButton:hover:not(:disabled) {
+    background: var(--stripe-100);
+    border-color: var(--stripe-300);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.confirmButton {
+    background: var(--stripe-gradient-primary);
+    color: var(--button-primary-text);
+    box-shadow: 0 4px 14px rgba(99, 91, 255, 0.25);
+}
+
+.confirmButton:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-hover), var(--accent-color));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 91, 255, 0.35);
+}
+
+.confirmButton:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.actionButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Loading state animation */
+.confirmButton:disabled {
+    position: relative;
+}
+
+.confirmButton:disabled::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .modalContent {
+        width: 95%;
+        margin: 20px;
+        max-height: calc(100vh - 40px);
+    }
+
+    .modalHeader {
+        padding: 20px 20px 0 20px;
+    }
+
+    .appointmentInfo,
+    .selectedSlotInfo,
+    .calendarContainer {
+        margin: 0 20px 20px 20px;
+        padding: 16px;
+    }
+
+    .modalActions {
+        padding: 20px;
+        flex-direction: column;
+    }
+
+    .actionButton {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .modalHeader h3 {
+        font-size: 1.25rem;
+    }
+
+    .appointmentInfo,
+    .selectedSlotInfo {
+        padding: 16px;
+    }
+
+    .appointmentInfo p,
+    .selectedSlotInfo p {
+        font-size: 13px;
+    }
+}

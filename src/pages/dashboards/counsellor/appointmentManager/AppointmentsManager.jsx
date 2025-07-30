@@ -1,278 +1,233 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../../../hooks/AuthenticationContext.jsx';
 import styles from './AppointmentsManager.module.css';
-import { FaCalendar, FaCheck, FaTimes, FaRedo, FaTrash } from 'react-icons/fa';
+import { FaCalendar, FaCheck, FaTimes, FaRedo, FaTrash, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
 import axiosInstance from "../../../../utils/axiosInstance.jsx";
+import RescheduleModal from "./rescheduleModal/RescheduleModal.jsx";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-const BaseUrl = import.meta.env.VITE_BACKEND_URL
+// Constants
+const APPOINTMENT_STATUSES = {
+    PENDING: 'PENDING',
+    ACCEPTED: 'ACCEPTED',
+    REJECTED: 'REJECTED',
+    RESCHEDULED: 'RESCHEDULED',
+    CANCELLED: 'CANCELLED'
+};
 
-export default function AppointmentsManager() {
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
+export default function CounsellorAppointmentsManager() {
     const { user } = useAuth();
-    const [sessions, setSessions] = useState([]);
+
+    // State management
+    const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedSession, setSelectedSession] = useState(null);
-    const [rescheduleData, setRescheduleData] = useState({
-        date: '',
-        timeSlot: ''
-    });
-    const [isRescheduling, setIsRescheduling] = useState(false);
+    const [actionLoading, setActionLoading] = useState(null);
 
     // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
     const [pagination, setPagination] = useState({
+        current_page: 1,
+        page_size: 10,
         total_count: 0,
         total_pages: 0,
         has_next: false,
-        has_prev: false,
-        current_page: 1
+        has_prev: false
     });
 
-    // Filtering and sorting state
-    const [statusFilter, setStatusFilter] = useState('');
-    const [sortBy, setSortBy] = useState('created_at');
-    const [sortOrder, setSortOrder] = useState('desc');
+    // Filters and sorting
+    const [filters, setFilters] = useState({
+        status: '',
+        sortBy: 'date',
+        sortOrder: 'desc'
+    });
 
-    // Fetch sessions on component mount and when pagination/filters change
-    useEffect(() => {
-        fetchAppointments();
-    }, [currentPage, pageSize, statusFilter, sortBy, sortOrder]);
+    // Reschedule modal state
+    const [rescheduleModal, setRescheduleModal] = useState({
+        isOpen: false,
+        appointment: null,
+        data: { date: '', timeSlot: '' }
+    });
 
-    useEffect(() => {
-        console.log('user is ', user)
-    }, [user])
+    // Verify user is a counsellor
+    const isCounsellor = user?.role === 'COUNSELLOR';
 
-
-    const fetchAppointments = async () => {
-        if (!user?.id) return;
+    // Fetch appointments with useCallback to prevent unnecessary re-renders
+    const fetchAppointments = useCallback(async () => {
+        if (!user?.id || !isCounsellor) return;
 
         try {
             setLoading(true);
+            setError(null);
 
-            // Build query parameters
             const params = new URLSearchParams({
-                page: currentPage.toString(),
-                page_size: pageSize.toString(),
-                sort_by: sortBy,
-                sort_order: sortOrder
+                page: pagination.current_page.toString(),
+                page_size: pagination.page_size.toString(),
+                sort_by: filters.sortBy,
+                sort_order: filters.sortOrder
             });
 
-            // Add status filter if selected and user is counsellor
-            if (statusFilter && user.role === 'COUNSELLOR') {
-                params.append('status', statusFilter);
+            if (filters.status) {
+                params.append('status', filters.status);
             }
 
             const response = await axiosInstance.get(
-                `${BaseUrl}/appointment/by-user/${user.id}?${params.toString()}`
+                `${BASE_URL}/appointment/by-user/${user.id}?${params.toString()}`
             );
 
-            console.log('appointments response: ', response.data);
+            const { appointments: appointmentsData, pagination: paginationData } = response.data;
 
-            if (response.data) {
-                // Handle both new paginated format and old format for backward compatibility
-                const appointmentsData = response.data.appointments ||
-                    response.data._embedded?.sessionList ||
-                    [];
+            setAppointments(appointmentsData || []);
+            setPagination(prevPagination => ({
+                ...prevPagination,
+                ...paginationData
+            }));
 
-                setSessions(appointmentsData);
-
-                // Set pagination info
-                if (response.data.pagination) {
-                    setPagination(response.data.pagination);
-                } else {
-                    // Fallback for backward compatibility
-                    setPagination({
-                        total_count: response.data.total_appointments || appointmentsData.length,
-                        total_pages: 1,
-                        has_next: false,
-                        has_prev: false,
-                        current_page: 1
-                    });
-                }
-            } else {
-                setSessions([]);
-                setPagination({
-                    total_count: 0,
-                    total_pages: 0,
-                    has_next: false,
-                    has_prev: false,
-                    current_page: 1
-                });
-            }
-            setError(null);
         } catch (err) {
-            setError('Failed to fetch sessions. Please try again later.');
-            console.error('Error fetching sessions:', err);
+            console.error('Error fetching appointments:', err);
+            setError('Failed to fetch appointments. Please try again later.');
+            setAppointments([]);
         } finally {
             setLoading(false);
         }
+    }, [user?.id, isCounsellor, pagination.current_page, pagination.page_size, filters]);
+
+    // Initial load and dependency updates
+    useEffect(() => {
+        fetchAppointments();
+    }, [fetchAppointments]);
+
+    // Handle appointment actions
+    const handleAppointmentAction = async (appointment, action) => {
+        setActionLoading(appointment._id);
+
+        try {
+            let endpoint = '';
+            let method = 'patch';
+            let payload = {};
+
+            switch (action) {
+                case 'accept':
+                    endpoint = `/appointment/update-status/${appointment._id}`;
+                    payload = APPOINTMENT_STATUSES.ACCEPTED;
+                    break;
+
+                case 'reject':
+                    endpoint = `/appointment/update-status/${appointment._id}`;
+                    payload = APPOINTMENT_STATUSES.REJECTED;
+                    break;
+
+                case 'reschedule':
+                    endpoint = `/appointment/update-status/${appointment._id}`;
+                    payload = APPOINTMENT_STATUSES.RESCHEDULED;
+                    // Additional logic for rescheduling would go here
+                    break;
+
+                case 'delete':
+                    if (!window.confirm('Are you sure you want to delete this appointment?')) {
+                        return;
+                    }
+                    endpoint = `/appointment/delete/${appointment._id}`;
+                    method = 'delete';
+                    break;
+
+                default:
+                    throw new Error(`Unknown action: ${action}`);
+            }
+
+            const axiosMethod = axiosInstance[method];
+            const response = method === 'delete'
+                ? await axiosMethod(`${BASE_URL}${endpoint}`)
+                : await axiosMethod(`${BASE_URL}${endpoint}`, payload);
+
+            console.log('action response: ', response)
+
+            // Refresh appointments after successful action
+            await fetchAppointments();
+
+            // Close reschedule modal if open
+            if (rescheduleModal.isOpen) {
+                closeRescheduleModal();
+            }
+
+        } catch (err) {
+            console.error(`Error performing ${action}:`, err);
+            setError(`Failed to ${action} appointment. Please try again.`);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
+    // Pagination handlers
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.total_pages) {
-            setCurrentPage(newPage);
+            setPagination(prev => ({ ...prev, current_page: newPage }));
         }
     };
 
     const handlePageSizeChange = (newSize) => {
-        setPageSize(parseInt(newSize));
-        setCurrentPage(1); // Reset to first page when changing page size
+        setPagination(prev => ({
+            ...prev,
+            page_size: parseInt(newSize),
+            current_page: 1
+        }));
     };
 
-    const handleStatusFilterChange = (status) => {
-        setStatusFilter(status);
-        setCurrentPage(1); // Reset to first page when filtering
+    // Filter handlers
+    const handleFilterChange = (filterType, value) => {
+        setFilters(prev => ({ ...prev, [filterType]: value }));
+        setPagination(prev => ({ ...prev, current_page: 1 }));
     };
 
-    const handleSortChange = (field) => {
-        if (sortBy === field) {
-            // Toggle sort order if same field
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            // Set new field with default descending order
-            setSortBy(field);
-            setSortOrder('desc');
-        }
-        setCurrentPage(1); // Reset to first page when sorting
-    };
-
-    const handleAccept = async (session) => {
-        try {
-            // Update session status to CONFIRMED
-            const updatedSession = { ...session, status: 'CONFIRMED' };
-
-            // Add the student to the client list
-            console.log('user info:', user)
-            await ClientService.addClient(
-                baseUrl,
-                accessToken,
-                {
-                    counsellorId: user.userId,
-                    studentId: session.studentId,
-                    sessionId: session.sessionId
-                }
-            );
-
-            // Update the session list to reflect the changes
-            setSessions(sessions.map(s =>
-                s.sessionId === session.sessionId ? updatedSession : s
-            ));
-
-            // Refresh sessions from the server
-            fetchAppointments();
-        } catch (err) {
-            setError('Failed to accept session. Please try again.');
-            console.error('Error accepting session:', err);
-        }
-    };
-
-    const handleReject = async (session) => {
-        try {
-            // Cancel the session
-            await SessionService.cancelSession(
-                baseUrl,
-                accessToken,
-                session.sessionId
-            );
-
-            // Remove the session from the list
-            setSessions(sessions.filter(s => s.sessionId !== session.sessionId));
-        } catch (err) {
-            setError('Failed to reject session. Please try again.');
-            console.error('Error rejecting session:', err);
-        }
-    };
-
-    const handleDelete = async (session) => {
-        if (window.confirm('Are you sure you want to delete this session?')) {
-            try {
-                // Cancel the session
-                await SessionService.cancelSession(
-                    baseUrl,
-                    accessToken,
-                    session.sessionId
-                );
-
-                // Remove the session from the list
-                setSessions(sessions.filter(s => s.sessionId !== session.sessionId));
-            } catch (err) {
-                setError('Failed to delete session. Please try again.');
-                console.error('Error deleting session:', err);
+    // Reschedule modal handlers
+    const openRescheduleModal = (appointment) => {
+        setRescheduleModal({
+            isOpen: true,
+            appointment,
+            data: {
+                date: formatDateForInput(new Date(appointment.date)),
+                timeSlot: appointment.timeSlot
             }
-        }
-    };
-
-    const openRescheduleModal = (session) => {
-        setSelectedSession(session);
-        setRescheduleData({
-            date: formatDateForInput(new Date(session.date)),
-            timeSlot: session.timeSlot
         });
-        setIsRescheduling(true);
     };
 
     const closeRescheduleModal = () => {
-        setIsRescheduling(false);
-        setSelectedSession(null);
+        setRescheduleModal({
+            isOpen: false,
+            appointment: null,
+            data: { date: '', timeSlot: '' }
+        });
+        fetchAppointments();
     };
 
-    const handleRescheduleSubmit = async (e) => {
-        e.preventDefault();
 
-        if (!selectedSession) return;
-
-        try {
-            await SessionService.rescheduleSession(
-                baseUrl,
-                accessToken,
-                selectedSession.sessionId,
-                new Date(rescheduleData.date),
-                rescheduleData.timeSlot
-            );
-
-            // Update the session in the list
-            setSessions(sessions.map(s =>
-                s.sessionId === selectedSession.sessionId
-                    ? { ...s, status: 'RESCHEDULED', date: new Date(rescheduleData.date), timeSlot: rescheduleData.timeSlot }
-                    : s
-            ));
-
-            closeRescheduleModal();
-            // Refresh sessions from the server
-            fetchAppointments();
-        } catch (err) {
-            setError('Failed to reschedule session. Please try again.');
-            console.error('Error rescheduling session:', err);
-        }
-    };
-
+    // Utility functions
     const formatDateForInput = (date) => {
         const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        return d.toISOString().split('T')[0];
     };
 
     const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     };
 
     const getStatusClass = (status) => {
-        switch (status) {
-            case 'CONFIRMED': return styles.confirmed;
-            case 'RESCHEDULED': return styles.confirmed;
-            case 'CANCELLED': return styles.cancelled;
-            case 'PENDING': return styles.pending;
-            case 'COMPLETED': return styles.completed;
-            default: return '';
-        }
+        const statusClasses = {
+            [APPOINTMENT_STATUSES.ACCEPTED]: styles.accepted,
+            [APPOINTMENT_STATUSES.REJECTED]: styles.rejected,
+            [APPOINTMENT_STATUSES.CANCELLED]: styles.cancelled,
+            [APPOINTMENT_STATUSES.PENDING]: styles.pending,
+            [APPOINTMENT_STATUSES.RESCHEDULED]: styles.rescheduled
+        };
+        return statusClasses[status] || '';
     };
 
-    // Generate page numbers for pagination
-    const getPageNumbers = () => {
+    const generatePageNumbers = () => {
         const pages = [];
         const maxVisible = 5;
         const totalPages = pagination.total_pages;
@@ -282,8 +237,7 @@ export default function AppointmentsManager() {
                 pages.push(i);
             }
         } else {
-            // Show pages around current page
-            let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let start = Math.max(1, pagination.current_page - Math.floor(maxVisible / 2));
             let end = Math.min(totalPages, start + maxVisible - 1);
 
             if (end - start < maxVisible - 1) {
@@ -298,214 +252,228 @@ export default function AppointmentsManager() {
         return pages;
     };
 
+    // Early return if user is not a counsellor
+    if (!isCounsellor) {
+        return (
+            <div className={styles.sessionManager}>
+                <div className={styles.error}>
+                    Access denied. This page is only available for counsellors.
+                </div>
+            </div>
+        );
+    }
+
+    // Loading state
+    if (loading && appointments.length === 0) {
+        return (
+            <div className={styles.sessionManager}>
+                <div className={styles.loading}>Loading appointments...</div>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.sessionManager}>
+            {/* Header */}
             <div className={styles.header}>
-                <h2>Session Management</h2>
+                <h2>My Appointments</h2>
                 <div className={styles.headerControls}>
-                    {/* Status Filter (for counsellors only) */}
-                    {user?.role === 'COUNSELLOR' && (
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => handleStatusFilterChange(e.target.value)}
-                            className={styles.filterSelect}
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="CONFIRMED">Confirmed</option>
-                            <option value="RESCHEDULED">Rescheduled</option>
-                            <option value="CANCELLED">Cancelled</option>
-                            <option value="COMPLETED">Completed</option>
-                        </select>
-                    )}
+                    {/* Status Filter */}
+                    <select
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                        className={styles.filterSelect}
+                    >
+                        <option value="">All Statuses</option>
+                        {Object.values(APPOINTMENT_STATUSES).map(status => (
+                            <option key={status} value={status}>
+                                {status.charAt(0) + status.slice(1).toLowerCase()}
+                            </option>
+                        ))}
+                    </select>
 
                     {/* Page Size Selector */}
                     <select
-                        value={pageSize}
+                        value={pagination.page_size}
                         onChange={(e) => handlePageSizeChange(e.target.value)}
                         className={styles.pageSizeSelect}
                     >
-                        <option value="5">5 per page</option>
-                        <option value="10">10 per page</option>
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
+                        {PAGE_SIZE_OPTIONS.map(size => (
+                            <option key={size} value={size}>{size} per page</option>
+                        ))}
                     </select>
 
+                    {/* Refresh Button */}
                     <button
                         className={styles.refreshButton}
                         onClick={fetchAppointments}
                         disabled={loading}
                     >
-                        Refresh
+                        {loading ? 'Loading...' : 'Refresh'}
                     </button>
                 </div>
             </div>
 
             {/* Pagination Info */}
             <div className={styles.paginationInfo}>
-                Showing {sessions.length > 0 ? ((currentPage - 1) * pageSize) + 1 : 0} to {Math.min(currentPage * pageSize, pagination.total_count)} of {pagination.total_count} appointments
+                Showing {appointments.length > 0 ? ((pagination.current_page - 1) * pagination.page_size) + 1 : 0} to{' '}
+                {Math.min(pagination.current_page * pagination.page_size, pagination.total_count)} of{' '}
+                {pagination.total_count} appointments
             </div>
 
+            {/* Error Display */}
             {error && <div className={styles.error}>{error}</div>}
 
-            {loading ? (
-                <div className={styles.loading}>Loading sessions...</div>
-            ) : sessions.length === 0 ? (
-                <div className={styles.noSessions}>No sessions found.</div>
+            {/* Appointments List */}
+            {appointments.length === 0 ? (
+                <div className={styles.noSessions}>
+                    No appointments found.
+                </div>
             ) : (
                 <>
                     <div className={styles.sessionList}>
-                        {sessions.map((session) => (
-                            <div key={session.sessionId} className={styles.sessionCard}>
-                                <div className={styles.sessionHeader}>
-                                    <div className={styles.sessionDate}>
-                                        <FaCalendar className={styles.icon} />
-                                        <span>{formatDate(session.date)} - {session.timeSlot}</span>
-                                    </div>
-                                    <div className={`${styles.sessionStatus} ${getStatusClass(session.status)}`}>
-                                        {session.status}
-                                    </div>
-                                </div>
-
-                                <div className={styles.sessionBody}>
-                                    <div className={styles.sessionDetail}>
-                                        <strong>Student ID:</strong> {session.studentId}
-                                    </div>
-                                    <div className={styles.sessionDetail}>
-                                        <strong>Description:</strong> {session.description || 'No description provided.'}
-                                    </div>
-                                </div>
-
-                                <div className={styles.sessionActions}>
-                                    {session.status === 'PENDING' && (
-                                        <>
-                                            <button
-                                                className={`${styles.actionButton} ${styles.acceptButton}`}
-                                                onClick={() => handleAccept(session)}
-                                                title="Accept"
-                                            >
-                                                <FaCheck /> Accept
-                                            </button>
-                                            <button
-                                                className={`${styles.actionButton} ${styles.rejectButton}`}
-                                                onClick={() => handleReject(session)}
-                                                title="Reject"
-                                            >
-                                                <FaTimes /> Reject
-                                            </button>
-                                        </>
-                                    )}
-                                    <button
-                                        className={`${styles.actionButton} ${styles.rescheduleButton}`}
-                                        onClick={() => openRescheduleModal(session)}
-                                        title="Reschedule"
-                                    >
-                                        <FaRedo /> Reschedule
-                                    </button>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.deleteButton}`}
-                                        onClick={() => handleDelete(session)}
-                                        title="Delete"
-                                    >
-                                        <FaTrash /> Delete
-                                    </button>
-                                </div>
-                            </div>
+                        {appointments.map((appointment) => (
+                            <AppointmentCard
+                                key={appointment._id}
+                                appointment={appointment}
+                                onAction={handleAppointmentAction}
+                                onReschedule={openRescheduleModal}
+                                actionLoading={actionLoading}
+                                formatDate={formatDate}
+                                getStatusClass={getStatusClass}
+                            />
                         ))}
                     </div>
 
                     {/* Pagination Controls */}
                     {pagination.total_pages > 1 && (
-                        <div className={styles.paginationControls}>
-                            {/* Previous Button */}
-                            <button
-                                className={`${styles.paginationButton} ${!pagination.has_prev ? styles.disabled : ''}`}
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={!pagination.has_prev}
-                            >
-                                <FaChevronLeft /> Previous
-                            </button>
-
-                            {/* Page Numbers */}
-                            <div className={styles.pageNumbers}>
-                                {getPageNumbers().map(pageNum => (
-                                    <button
-                                        key={pageNum}
-                                        className={`${styles.pageButton} ${pageNum === currentPage ? styles.active : ''}`}
-                                        onClick={() => handlePageChange(pageNum)}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Next Button */}
-                            <button
-                                className={`${styles.paginationButton} ${!pagination.has_next ? styles.disabled : ''}`}
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={!pagination.has_next}
-                            >
-                                Next <FaChevronRight />
-                            </button>
-                        </div>
+                        <PaginationControls
+                            pagination={pagination}
+                            onPageChange={handlePageChange}
+                            generatePageNumbers={generatePageNumbers}
+                        />
                     )}
                 </>
             )}
 
-
             {/* Reschedule Modal */}
-            {isRescheduling && selectedSession && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <h3>Reschedule Session</h3>
-
-                        <form onSubmit={handleRescheduleSubmit}>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="date">Date:</label>
-                                <input
-                                    type="date"
-                                    id="date"
-                                    value={rescheduleData.date}
-                                    onChange={(e) => setRescheduleData({...rescheduleData, date: e.target.value})}
-                                    required
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label htmlFor="timeSlot">Time Slot:</label>
-                                <select
-                                    id="timeSlot"
-                                    value={rescheduleData.timeSlot}
-                                    onChange={(e) => setRescheduleData({...rescheduleData, timeSlot: e.target.value})}
-                                    required
-                                >
-                                    <option value="">Select Time Slot</option>
-                                    <option value="09:00 - 10:00">09:00 - 10:00</option>
-                                    <option value="10:00 - 11:00">10:00 - 11:00</option>
-                                    <option value="11:00 - 12:00">11:00 - 12:00</option>
-                                    <option value="13:00 - 14:00">13:00 - 14:00</option>
-                                    <option value="14:00 - 15:00">14:00 - 15:00</option>
-                                    <option value="15:00 - 16:00">15:00 - 16:00</option>
-                                    <option value="16:00 - 17:00">16:00 - 17:00</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.modalActions}>
-                                <button type="submit" className={styles.submitButton}>
-                                    Reschedule
-                                </button>
-                                <button
-                                    type="button"
-                                    className={styles.cancelButton}
-                                    onClick={closeRescheduleModal}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            {rescheduleModal.isOpen && (
+                <RescheduleModal
+                    appointment={rescheduleModal.appointment}
+                    onClose={closeRescheduleModal}
+                    formatDate={formatDate}
+                />
             )}
+        </div>
+    );
+}
+
+// Appointment Card Component
+function AppointmentCard({
+                             appointment,
+                             onAction,
+                             onReschedule,
+                             actionLoading,
+                             formatDate,
+                             getStatusClass
+                         }) {
+    const isLoading = actionLoading === appointment._id;
+
+    return (
+        <div className={styles.sessionCard}>
+            <div className={styles.sessionHeader}>
+                <div className={styles.sessionDate}>
+                    <FaCalendar className={styles.icon} />
+                    <span>{formatDate(appointment.date)} - {appointment.timeSlot}</span>
+                </div>
+                <div className={`${styles.sessionStatus} ${getStatusClass(appointment.status)}`}>
+                    {appointment.status}
+                </div>
+            </div>
+
+            <div className={styles.sessionBody}>
+                <div className={styles.sessionDetail}>
+                    <strong>Client:</strong> {appointment.client_name || appointment.client_id}
+                </div>
+                <div className={styles.sessionDetail}>
+                    <strong>Email:</strong> {appointment.client_email || 'N/A'}
+                </div>
+                <div className={styles.sessionDetail}>
+                    <strong>Notes:</strong> {appointment.notes || 'No notes provided.'}
+                </div>
+            </div>
+
+            <div className={styles.sessionActions}>
+                {appointment.status === APPOINTMENT_STATUSES.PENDING && (
+                    <>
+                        <button
+                            className={`${styles.actionButton} ${styles.acceptButton}`}
+                            onClick={() => onAction(appointment, 'accept')}
+                            disabled={isLoading}
+                        >
+                            <FaCheck /> {isLoading ? 'Processing...' : 'Accept'}
+                        </button>
+                        <button
+                            className={`${styles.actionButton} ${styles.rejectButton}`}
+                            onClick={() => onAction(appointment, 'reject')}
+                            disabled={isLoading}
+                        >
+                            <FaTimes /> {isLoading ? 'Processing...' : 'Reject'}
+                        </button>
+                    </>
+                )}
+
+                <button
+                    className={`${styles.actionButton} ${styles.rescheduleButton}`}
+                    onClick={() => onReschedule(appointment)}
+                    disabled={isLoading}
+                >
+                    <FaRedo /> Reschedule
+                </button>
+
+                <button
+                    className={`${styles.actionButton} ${styles.deleteButton}`}
+                    onClick={() => onAction(appointment, 'delete')}
+                    disabled={isLoading}
+                >
+                    <FaTrash /> Delete
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Pagination Controls Component
+function PaginationControls({ pagination, onPageChange, generatePageNumbers }) {
+    return (
+        <div className={styles.paginationControls}>
+            <button
+                className={`${styles.paginationButton} ${!pagination.has_prev ? styles.disabled : ''}`}
+                onClick={() => onPageChange(pagination.current_page - 1)}
+                disabled={!pagination.has_prev}
+            >
+                <FaChevronLeft /> Previous
+            </button>
+
+            <div className={styles.pageNumbers}>
+                {generatePageNumbers().map(pageNum => (
+                    <button
+                        key={pageNum}
+                        className={`${styles.pageButton} ${pageNum === pagination.current_page ? styles.active : ''}`}
+                        onClick={() => onPageChange(pageNum)}
+                    >
+                        {pageNum}
+                    </button>
+                ))}
+            </div>
+
+            <button
+                className={`${styles.paginationButton} ${!pagination.has_next ? styles.disabled : ''}`}
+                onClick={() => onPageChange(pagination.current_page + 1)}
+                disabled={!pagination.has_next}
+            >
+                Next <FaChevronRight />
+            </button>
         </div>
     );
 }

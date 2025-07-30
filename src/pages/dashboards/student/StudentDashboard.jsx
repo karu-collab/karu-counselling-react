@@ -177,8 +177,6 @@ export default function StudentDashboard() {
                 users_info: usersInfo
             });
 
-            console.log("Booking response: ", response);
-
             // Show success message
             alert('Appointment booked successfully!');
 

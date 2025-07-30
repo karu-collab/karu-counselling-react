@@ -92,7 +92,9 @@ export default function ServerStatus() {
     const LoadingSpinnerWithCounter = () => (
         <div className={styles.spinnerContainer}>
             <div className={styles.spinner}>
-                <div className={styles.spinnerCounter}>{countdown}</div>
+                <div className={styles.spinnerCounter}>
+                    { `${Math.floor(((35 - countdown) / 35) * 100)}%` }
+                </div>
             </div>
         </div>
     );
