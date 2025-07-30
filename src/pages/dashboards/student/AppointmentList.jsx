@@ -19,6 +19,10 @@ const AppointmentList = ({
         filter === 'all' || appointment.status.toLowerCase() === filter.toLowerCase()
     );
 
+    useEffect(() => {
+        console.log('appointments: ',appointments)
+    },[])
+
     const filterOptions = [
         { value: 'all', label: 'All Appointments', count: appointments.length },
         { value: 'pending', label: 'Pending', count: appointments.filter(a => a.status.toLowerCase() === 'pending').length },
@@ -73,12 +77,6 @@ const AppointmentList = ({
                 break;
             case 'book-again':
                 onBookAgain?.(appointmentId);
-                break;
-            case 'accept':
-                onUpdateStatus?.(appointmentId, 'ACCEPTED');
-                break;
-            case 'confirm':
-                onUpdateStatus?.(appointmentId, 'CONFIRMED');
                 break;
             default:
                 console.log('Unknown action:', action);
@@ -175,9 +173,7 @@ const AppointmentList = ({
                                             <h3 className={styles.counselorName}>
                                                 {appointment.counsellor?.name || 'Counselor Name'}
                                             </h3>
-                                            <p className={styles.appointmentDescription}>
-                                                {appointment.description || 'Counselling Appointment'}
-                                            </p>
+
 
                                             {/* Date and Time */}
                                             <div className={styles.appointmentMeta}>
@@ -193,7 +189,7 @@ const AppointmentList = ({
 
                                             {appointment.notes && (
                                                 <div className={styles.appointmentNotes}>
-                                                    <strong>Notes:</strong> {appointment.notes}
+                                                    <strong>Description:</strong> {appointment.notes}
                                                 </div>
                                             )}
                                         </div>
@@ -218,20 +214,12 @@ const AppointmentList = ({
                                                     )}
                                                     className={styles.moreButton}
                                                 >
-                                                    <MoreHorizontal size={16} />
+                                                  More
                                                 </button>
 
                                                 {activeDropdown === appointment.id && (
                                                     <div className={styles.actionsMenu}>
-                                                        {appointment.status.toLowerCase() === 'pending' && (
-                                                            <button
-                                                                onClick={() => handleActionClick(appointment.id, 'accept')}
-                                                                className={styles.actionMenuItem}
-                                                            >
-                                                                <ArrowRight size={14} />
-                                                                Accept Appointment
-                                                            </button>
-                                                        )}
+
 
                                                         {(appointment.status.toLowerCase() === 'pending' ||
                                                             appointment.status.toLowerCase() === 'accepted') && (
